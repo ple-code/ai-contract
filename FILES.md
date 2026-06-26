@@ -11,10 +11,11 @@ ai-contract/
 ├── FILES.md              # 项目文件说明（本文件）
 ├── .gitignore            # 忽略音频/虚拟环境/缓存等
 ├── raw/                  # 原始需求 / 资料文件（音频、笔记）
-└── analysis/             # AI 分析结果（两层结构，详见 analysis/README.md）
-    ├── README.md         # 目录约定
-    ├── transcripts/      # AI 转写原始数据（机器产出，可重生成，请勿改）
-    └── summaries/        # 需求摘要（Claude 起草 + 用户直接改，git 兜底）
+└── analysis/             # Claude 产出的转写 + 摘要（全部平铺，详见 analysis/README.md）
+    ├── README.md         # 目录约定（git 兜底）
+    ├── *_说话人分离.{md,txt}
+    ├── *_raw.json
+    └── *_需求摘要.md
 ```
 
 ## 文件 / 目录详细说明
@@ -38,15 +39,15 @@ ai-contract/
 - **特性**：原始、只读、可追溯，**不要直接修改里面的内容**。
 - **占位文件**：`.gitkeep`（让空目录可被版本控制追踪，本身无业务含义）。
 
-### 4. analysis/ （分析结果目录，两层结构）
+### 4. analysis/ （Claude 产出目录，平铺）
 
-| 子目录 | 谁写 | 用途 |
-|---|---|---|
-| `transcripts/` | 仅 Claude | 机器转写（`*_说话人分离.{md,txt}` + `*_raw.json`），**请勿手动改**，要重转让我重跑 |
-| `summaries/` | Claude 起草 + **用户直接改** | 摘要（`*_需求摘要.md`）的**唯一版本**，你直接在上面改即可，不用复制出去 |
+所有 Claude 产出的文件平铺在这里，**不分子目录、不分可改/不可改**：
 
-- **详细约定**：见 `analysis/README.md`。
-- **安全网**：项目根 `git init` 已开。Claude 重新生成前会先 `git status` 检查，**未提交的改动会先问你**；万一覆盖了 `git diff` / `git checkout` 可找回。
+- `*_说话人分离.{md,txt}` —— 转写
+- `*_raw.json` —— 转写原始 JSON
+- `*_需求摘要.md` —— 摘要
+
+**你直接改任何文件**，git 兜底。Claude 重新生成前会先 `git status` 检查，未提交的改动会先问你。详见 `analysis/README.md`。
 
 ### 5. scripts/ingest.sh
 - **类型**：Bash 脚本
