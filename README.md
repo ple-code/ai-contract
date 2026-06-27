@@ -12,14 +12,20 @@ ai-contract/
 ├── FILES.md              # 逐项文件/目录用途说明
 ├── .gitignore            # 忽略音频/虚拟环境/缓存等
 ├── .git/                 # 版本控制（所有文本改动都有历史可查）
-├── raw/                  # 原始资料（录音、笔记）
+├── raw/                  # 原始资料（录音、笔记、合同样例）
 │   ├── *.m4a             # 调研录音（不入 git，太大）
-│   └── *.md              # 业务方提供的文字补充
-├── analysis/             # Claude 产出（转写 + 摘要，全部平铺）
+│   ├── *.md              # 业务方提供的文字补充
+│   └── *.docx            # 合同样本（如采购合同模板）
+├── analysis/             # 调研产出（转写 + 摘要，全部平铺）
 │   ├── README.md         # 该目录约定（git 兜底）
 │   ├── *_说话人分离.{md,txt}
 │   ├── *_raw.json
 │   └── *_需求摘要.md
+├── docs/                 # 产品交付文档（需求 / 技术 / 测试 / 部署）
+├── prototype/            # 高保真交互原型（HTML）
+├── app/                  # 前后端代码（见 app/README.md）
+│   ├── web/              # 前端：React 18 + TS + Vite
+│   └── api/              # 后端：Python + FastAPI
 ├── tmp/                  # 中间产物（已 .gitignore）
 └── .venv/                # Python 虚拟环境（FunASR 等，已 .gitignore）
 ```

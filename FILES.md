@@ -10,8 +10,11 @@ ai-contract/
 ├── FILES.md              # 项目文件说明（本文件，逐项清单）
 ├── .gitignore            # 忽略音频 / 虚拟环境 / 缓存等
 ├── .git/                 # 版本控制
-├── raw/                  # 原始资料（录音 + 笔记）
-├── analysis/             # Claude 产出（转写 + 摘要，平铺）
+├── raw/                  # 原始资料（录音 + 笔记 + 合同样本）
+├── analysis/             # 调研产出（转写 + 摘要，平铺）
+├── docs/                 # 产品交付文档（需求 / 技术 / 测试 / 部署）
+├── prototype/            # 高保真交互原型（HTML）
+├── app/                  # 前后端代码（web/ 前端 + api/ 后端）
 ├── tmp/                  # 中间产物（已忽略）
 └── .venv/                # Python 虚拟环境（FunASR 等，已忽略）
 ```
@@ -48,16 +51,31 @@ ai-contract/
 - **编辑约定**：**你想改哪个直接改**，git 兜底。详见 `analysis/README.md`。
 - **占位文件**：无（已有真实文件）。
 
-### 6. tmp/ （中间产物）
+### 6. docs/ （产品交付文档）
+- **作用**：从调研走向落地的正式交付文档，按 `01-需求 → 02-技术 → 03-拆解 → 04-测试 → 05-部署` 分阶段组织。
+- **关键文件**：`01-需求文档/PRD-v1.md`、`02-技术方案/技术方案-v1.md`、`02-技术方案/UI风格参考.md`、`05-部署/部署手册.md`。
+- **与 analysis/ 的区别**：`analysis/` 是调研中间产物；`docs/` 是面向工程交付的正式文档。
+
+### 7. prototype/ （高保真交互原型）
+- **作用**：前端视觉与交互基准，单文件 HTML，浏览器直接打开即可演示。
+- **当前文件**：`明衡-合同审阅工作台.html`。
+
+### 8. app/ （前后端代码）
+- **作用**：「明衡 · 合同审核 AI」的工程实现。
+- **结构**：`web/`（前端 React 18 + TS + Vite）、`api/`（后端 Python + FastAPI）。
+- **约定**：见 `app/README.md`；API 契约以 `docs/02-技术方案/技术方案-v1.md` 为准。
+- **占位文件**：`web/.gitkeep`、`api/.gitkeep`（待填充代码）。
+
+### 9. tmp/ （中间产物）
 - **作用**：临时文件、调试输出。
 - **特性**：已 `.gitignore`，不入库；可随时清空。
 
-### 7. .venv/ （Python 虚拟环境）
+### 10. .venv/ （Python 虚拟环境）
 - **作用**：本地 Python 环境，安装 FunASR、PyAV、ModelScope 等依赖。
 - **特性**：已 `.gitignore`，不入库。
 - **重建**：在新机器上 `python3 -m venv .venv && source .venv/bin/activate && pip install funasr modelscope av` 即可。
 
-### 8. .obsidian/ （Obsidian 配置）
+### 11. .obsidian/ （Obsidian 配置）
 - **作用**：本项目同时作为 Obsidian 笔记库使用，此目录存 Obsidian 配置。
 - **特性**：核心配置入库，`workspace*` 等本地状态忽略。
 
