@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>明衡 · 合同审阅工作台（交互原型）</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+:root{
+  --navy:#1a2740; --navy-deep:#11192b; --navy-soft:#2c3b5a;
+  --ink:#1c2230; --ink-soft:#4a5568;
+  --paper:#fcfcfa; --paper-dim:#f4f5f2;
+  --line:#e3e5e0; --line-strong:#c9ccc4;
+  --del:#b3261e; --del-bg:#fbeae8;
+  --ins:#1d5d8c; --ins-bg:#e7f0f6;
+  --risk-high:#b3261e; --risk-mid:#b07908; --risk-low:#5a6b52;
+  --gold:#b08d4f;
+  --ok:#4a6b38; --ok-bg:#e9f1e4;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--paper-dim);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;}
+.serif{font-family:'Noto Serif SC',serif;}
+button{font-family:inherit;cursor:pointer;}
+.hidden{display:none !important;}
+
+/* ===== 登录页 ===== */
+.login-wrap{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy-deep),var(--navy) 60%,var(--navy-soft));display:flex;align-items:center;justify-content:center;z-index:50;}
+.login-card{background:var(--paper);width:380px;border-radius:4px;padding:42px 38px;box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:3px solid var(--gold);}
+.login-brand{font-family:'Noto Serif SC',serif;font-size:30px;font-weight:700;letter-spacing:8px;color:var(--navy);text-align:center;}
+.login-sub{text-align:center;color:var(--ink-soft);font-size:12.5px;letter-spacing:2px;margin:6px 0 30px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+.field input{width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:2px;font-size:14px;font-family:inherit;background:var(--paper-dim);}
+.field input:focus{outline:none;border-color:var(--navy);background:#fff;}
+.login-btn{width:100%;background:var(--navy);color:#fff;border:none;padding:11px;font-size:14px;border-radius:2px;margin-top:8px;letter-spacing:2px;}
+.login-btn:hover{background:var(--navy-soft);}
+.login-hint{text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:16px;}
+
+/* ===== 角色选择弹层 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(17,25,43,.55);display:flex;align-items:center;justify-content:center;z-index:40;}
+.modal{background:var(--paper);width:560px;border-radius:4px;padding:30px 32px;border-top:3px solid var(--gold);}
+.modal h3{font-family:'Noto Serif SC',serif;font-size:18px;color:var(--navy);margin-bottom:4px;}
+.modal .lead{font-size:12.5px;color:var(--ink-soft);margin-bottom:22px;}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.role-grid-4{grid-template-columns:repeat(4,1fr);}
+.role-card{border:1.5px solid var(--line-strong);border-radius:3px;padding:16px 14px;text-align:center;transition:.15s;background:var(--paper-dim);}
+.role-card:hover{border-color:var(--navy-soft);}
+.role-card.sel{border-color:var(--gold);background:#fff;box-shadow:0 4px 14px rgba(176,141,79,.18);}
+.role-card .rname{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+.role-card .rdesc{font-size:11.5px;color:var(--ink-soft);line-height:1.5;}
+.modal-foot{display:flex;align-items:center;justify-content:space-between;margin-top:24px;}
+.remember{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
+.confirm-btn{background:var(--navy);color:#fff;border:none;padding:9px 26px;font-size:13.5px;border-radius:2px;letter-spacing:1px;}
+.confirm-btn:hover{background:var(--navy-soft);}
+.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:2px;font-size:14px;font-family:inherit;line-height:1.65;resize:vertical;min-height:96px;background:var(--paper-dim);color:var(--ink);}
+.modal textarea:focus{outline:none;border-color:var(--navy);background:#fff;}
+.modal textarea::placeholder{color:#a0a8b4;}
+.annotate-clause{font-family:'Noto Serif SC',serif;font-size:14px;color:var(--navy);background:var(--paper-dim);border:1px solid var(--line);border-left:3px solid var(--gold);padding:10px 14px;margin-bottom:16px;border-radius:0 3px 3px 0;line-height:1.5;}
+.annotate-meta{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+.modal-foot.right{justify-content:flex-end;gap:10px;}
+.modal-foot-actions{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.ca-btn.danger{border-color:#e7b6b1;color:var(--del);}
+.ca-btn.danger:hover{background:var(--del-bg);border-color:var(--del);}
+
+/* ===== 顶栏 ===== */
+.topbar{background:var(--navy);color:#eef0f4;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:20;}
+.topbar-left{display:flex;align-items:center;gap:14px;min-width:0;}
+.nav-back{background:transparent;border:1px solid rgba(176,141,79,.35);color:#d4bc8a;border-radius:2px;padding:5px 12px;font-size:12.5px;cursor:pointer;font-family:inherit;line-height:1.4;flex-shrink:0;}
+.nav-back:hover{background:rgba(176,141,79,.14);border-color:var(--gold);color:#f2ead8;}
+.brand{display:flex;align-items:baseline;gap:10px;cursor:pointer;min-width:0;}
+.brand .mark{font-family:'Noto Serif SC',serif;font-weight:700;font-size:18px;letter-spacing:3px;white-space:nowrap;}
+.brand .sub{font-size:12px;color:#9aa6bd;letter-spacing:.5px;white-space:nowrap;}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px;}
+.post-chip{font-size:12px;background:#22304d;color:#cdd4e2;border:1px solid #38476a;border-radius:2px;padding:4px 10px;cursor:pointer;}
+.post-chip:hover{background:#2c3b5a;border-color:var(--gold);}
+.icon-btn{background:transparent;border:1px solid #38476a;color:#cdd4e2;border-radius:2px;padding:5px 11px;font-size:12.5px;}
+.icon-btn:hover{background:#22304d;}
+
+/* ===== 左侧模块菜单 ===== */
+.app-body{display:flex;min-height:calc(100vh - 54px);}
+.sidemenu{width:172px;flex-shrink:0;background:var(--navy-deep);padding:14px 0;display:flex;flex-direction:column;position:sticky;top:54px;height:calc(100vh - 54px);align-self:flex-start;overflow-y:auto;}
+/* 个人信息（侧栏底部）*/
+.side-user{margin-top:auto;margin-left:10px;margin-right:10px;margin-bottom:8px;position:relative;display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid #1f2c49;cursor:pointer;border-radius:4px;}
+.side-user:hover{background:#1b2742;}
+.su-avatar{width:32px;height:32px;flex:none;border-radius:50%;background:var(--gold);color:var(--navy-deep);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;font-family:'Noto Serif SC',serif;}
+.su-info{min-width:0;flex:1;}
+.su-name{font-size:13px;color:#e7ebf3;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.su-post{font-size:11px;color:#8b97b3;margin-top:1px;}
+.su-caret{color:#8b97b3;font-size:11px;}
+.su-menu{position:absolute;left:10px;right:10px;bottom:calc(100% - 2px);background:#fff;border:1px solid var(--line);border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.18);overflow:hidden;z-index:30;}
+.su-mi{padding:10px 14px;font-size:13px;color:var(--navy);cursor:pointer;}
+.su-mi:hover{background:var(--paper-dim);}
+.su-mi+.su-mi{border-top:1px solid var(--line);}
+.menu-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:13.5px;color:#9aa6bd;cursor:pointer;border-left:3px solid transparent;}
+.menu-item:hover{background:#1b2742;color:#cdd4e2;}
+.menu-item.active{background:#1b2742;border-left-color:var(--gold);color:#fff;font-weight:500;}
+.menu-item .mi-ico{width:18px;text-align:center;opacity:.9;}
+.menu-item .soon{margin-left:auto;font-size:10px;color:#6b7896;border:1px solid #38476a;border-radius:2px;padding:0 5px;}
+.menu-sep{font-size:10.5px;letter-spacing:1px;color:#5d6a87;padding:16px 18px 6px;text-transform:none;}
+.kb-tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+.kb-tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:14px;color:var(--ink-soft);cursor:pointer;font-family:inherit;}
+.kb-tab:hover{color:var(--navy);}
+.kb-tab.active{color:var(--navy);border-bottom-color:var(--gold);font-weight:500;}
+.kb-n{display:inline-block;font-size:11px;background:#eef0f4;color:var(--navy-soft);border-radius:9px;padding:0 7px;margin-left:2px;}
+.kb-note{font-size:12px;color:var(--ink-soft);margin:0 0 12px;}
+/* 岗位关注点配置 */
+.focus-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 14px;}
+.focus-row{padding:12px 0;border-bottom:1px solid var(--line);}
+.focus-row:last-of-type{border-bottom:none;}
+.focus-post{font-weight:600;color:var(--navy);font-size:13.5px;margin-bottom:8px;}
+.focus-post .ai-flag{font-size:11px;color:#9a7a2a;background:#fbf1dc;border-radius:2px;padding:1px 7px;margin-left:8px;font-weight:400;}
+.tagchk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);background:var(--paper-dim);border:1px solid var(--line);border-radius:3px;padding:5px 10px;margin:0 8px 8px 0;cursor:pointer;user-select:none;}
+.tagchk input{accent-color:var(--navy);margin:0;}
+.tagchk.on{background:#eaf0f6;border-color:var(--navy-soft);color:var(--navy);}
+.tagchk .df{font-size:10px;color:#9a7a2a;}
+.content-area{flex:1;min-width:0;overflow-x:hidden;}
+.content-area:has(#workbench:not(.hidden)){
+  display:flex;flex-direction:column;height:calc(100vh - 54px);overflow:hidden;
+}
+.content-area:has(#workbench:not(.hidden)) > #docbar,
+.content-area:has(#workbench:not(.hidden)) > #statusSteps{flex-shrink:0;}
+
+/* ===== docbar ===== */
+.docbar{background:var(--paper-dim);border-bottom:1px solid var(--line);padding:14px 24px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;}
+.docbar-left{flex:1;min-width:0;}
+.docbar h1{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:600;color:var(--navy);margin:0 0 10px;line-height:1.4;}
+.docbar-sub{display:flex;flex-direction:column;gap:8px;}
+.docbar-tags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.type-badge{font-size:11px;background:var(--ok-bg);color:var(--ok);padding:1px 8px;border-radius:2px;font-weight:500;white-space:nowrap;}
+.enc-badge{font-size:11px;background:transparent;color:#9aa3b0;padding:0;border:none;font-weight:400;white-space:nowrap;}
+.docbar .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12px;line-height:1.5;}
+.meta-item{display:inline-flex;align-items:center;gap:4px;color:var(--ink-soft);}
+.meta-k{color:#a8b0bc;font-size:11px;}
+.meta-val{color:#6b7280;}
+.meta-val.status{color:var(--ins);background:rgba(29,93,140,.08);padding:1px 7px;border-radius:2px;font-size:11px;}
+.docbar-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;padding-top:2px;}
+.docbar-divider{width:1px;height:24px;background:var(--line);flex-shrink:0;}
+.stance-switch .lbl{font-size:11px;color:#a8b0bc;letter-spacing:.3px;white-space:nowrap;}
+.seg{background:#fff;border-color:var(--line);}
+.vbadge{border:1px solid var(--line);border-radius:2px;background:#fff;color:#8b939e;font-size:12px;padding:4px 10px;line-height:1.3;white-space:nowrap;}
+.vbadge.new{border-color:var(--navy-soft);color:var(--navy);font-weight:600;background:#fff;}
+/* 系统配置（整页）*/
+.sys-page{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden;max-width:860px;}
+.sys-wrap{display:flex;min-height:420px;}
+.sys-nav{width:170px;background:var(--paper-dim);border-right:1px solid var(--line);padding:18px 0;flex:none;}
+.sys-nav-title{font-family:'Noto Serif SC',serif;font-weight:600;color:var(--navy);font-size:15px;padding:0 18px 12px;}
+.sys-tab{padding:10px 18px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;border-left:3px solid transparent;}
+.sys-tab:hover{background:#eef0f4;color:var(--navy);}
+.sys-tab.active{background:#fff;border-left-color:var(--gold);color:var(--navy);font-weight:500;}
+.sys-body{flex:1;padding:24px 26px;min-width:0;}
+.sys-pane h3{margin:0 0 4px;}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink-soft);}
+.kv b{font-weight:500;color:var(--navy);}
+.kv b.on{color:var(--ok);}
+.kv b.off{color:#a07a2a;}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.6;}
+.st{font-size:11.5px;padding:2px 9px;border-radius:2px;font-weight:500;}
+.st-on{background:var(--ok-bg);color:var(--ok);}
+.st-off{background:#f0e7e7;color:#9a5a5a;}
+.st-mid{background:#fbf1dc;color:#9a7a2a;}
+.rule-table{table-layout:fixed;}
+.rule-table th,.rule-table td{vertical-align:middle;}
+.rule-table tbody tr{cursor:default;}
+.rule-table .col-name{width:16%;}
+.rule-table .col-type{width:88px;white-space:nowrap;}
+.rule-table .col-cond{width:30%;}
+.rule-table .col-risk{width:96px;min-width:96px;white-space:nowrap;text-align:center;}
+.rule-table .col-sug{width:auto;}
+.rule-table .st{display:inline-block;white-space:nowrap;line-height:1.4;}
+#legalBody .tag,#ruleBody .tag{display:inline-block;margin:2px 4px 2px 0;font-size:11px;padding:1px 8px;border-radius:2px;background:#eef0f4;color:var(--navy-soft);border:1px solid var(--line);}
+.rowact{color:var(--navy-soft);cursor:pointer;font-size:12.5px;}
+.rowact:hover{color:var(--gold);text-decoration:underline;}
+.versions{display:flex;align-items:center;gap:6px;font-size:13px;}
+.ver-arrow{color:#c5c9c0;font-size:11px;}
+.stance-switch{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.stance-row{display:flex;align-items:center;gap:8px;}
+.stance-lock-hint{font-size:10px;color:#b08d4f;line-height:1.3;text-align:right;max-width:200px;}
+.stance-switch.locked .lbl{color:#b08d4f;}
+.seg button:disabled{opacity:.42;cursor:not-allowed;}
+.seg button:disabled.on{background:#e8e4dc;color:#8b939e;font-weight:400;}
+.seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:#fff;}
+.seg button{background:transparent;border:none;border-right:1px solid var(--line);color:#8b939e;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;line-height:1.3;transition:background .12s,color .12s;}
+.seg button:last-child{border-right:none;}
+.seg button:hover{background:var(--paper-dim);color:var(--navy);}
+.seg button.on{background:var(--navy);color:#fff;font-weight:500;}
+.btn-export{background:var(--navy);color:#fff;border:none;padding:7px 15px;font-size:13px;border-radius:2px;cursor:pointer;}
+.btn-export:hover{background:var(--navy-soft);}
+.btn-export.outline{background:#fff;color:var(--navy);border:1px solid var(--line-strong);}
+.btn-export.outline:hover{background:var(--paper-dim);}
+.export-group{display:flex;align-items:center;gap:6px;position:relative;}
+.export-menu{position:absolute;top:calc(100% + 4px);right:0;min-width:168px;background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:6px 0;z-index:25;text-align:left;}
+.export-mi{display:flex;align-items:center;justify-content:flex-start;padding:9px 14px;min-height:36px;box-sizing:border-box;font-size:13px;color:var(--navy);cursor:pointer;white-space:nowrap;line-height:1.4;}
+.export-mi:hover{background:var(--paper-dim);}
+.export-mi+.export-mi{border-top:1px solid var(--line);}
+.export-mi small{color:var(--ink-soft);margin-left:4px;}
+.export-mi.has-sub{position:relative;justify-content:space-between;}
+.export-mi.has-sub .sub-arr{color:var(--ink-soft);font-size:12px;flex:none;margin-left:12px;}
+.export-sub{display:none;position:absolute;right:calc(100% + 4px);top:-6px;min-width:148px;background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:6px 0;z-index:30;}
+.export-mi.has-sub:hover{background:var(--paper-dim);}
+.export-mi.has-sub:hover .export-sub{display:block;}
+.export-sub .export-mi{border-top:none;}
+.export-sub .export-mi+.export-mi{border-top:1px solid var(--line);}
+.row-menu{position:relative;display:inline-block;}
+.row-menu-btn{padding:4px 11px;border:1px solid var(--line-strong);border-radius:2px;background:var(--paper);color:var(--navy-soft);font-size:12.5px;cursor:pointer;font-family:inherit;line-height:1.4;}
+.row-menu-btn:hover{border-color:var(--navy-soft);color:var(--navy);background:#fff;}
+.col-actions{text-align:center;white-space:nowrap;}
+.ctable td.col-actions{padding:10px 8px;}
+/* 变更记录弹层 */
+.chlog-scroll{max-height:460px;overflow-y:auto;margin-top:8px;padding-right:4px;}
+.chlog-card{border:1px solid var(--line);border-radius:4px;margin-bottom:10px;overflow:hidden;background:#fff;}
+.chlog-card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:var(--paper-dim);user-select:none;}
+.chlog-card-head:hover{background:#eef0f4;}
+.chlog-card-head .ver{font-family:'Noto Serif SC',serif;font-weight:600;color:var(--navy);font-size:14px;}
+.chlog-card-head .cnt{font-weight:400;font-size:12px;color:var(--ink-soft);}
+.chlog-card-head .caret{color:var(--ink-soft);font-size:12px;transition:transform .2s;}
+.chlog-card.open .chlog-card-head .caret{transform:rotate(180deg);}
+.chlog-card-body{display:none;padding:4px 14px 10px;}
+.chlog-card.open .chlog-card-body{display:block;}
+.chlog-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;line-height:1.6;}
+.chlog-item:last-child{border-bottom:none;}
+.chlog-time{flex:none;width:132px;color:var(--ink-soft);font-size:12px;}
+.chlog-body{flex:1;min-width:0;}
+.chlog-user{color:var(--navy);font-weight:500;}
+.chlog-tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:2px;margin-right:6px;font-weight:500;}
+.chlog-tag.upload{background:#eef0f4;color:var(--navy-soft);}
+.chlog-tag.diff{background:#eaf0f6;color:var(--navy);}
+.chlog-tag.accept{background:var(--ok-bg);color:var(--ok);}
+.chlog-tag.reject{background:#f0e7e7;color:#9a5a5a;}
+.chlog-tag.annotate{background:#fbf1dc;color:#9a7a2a;}
+.chlog-tag.return{background:#f0e7e7;color:#9a5a5a;}
+.chlog-tag.finalize{background:var(--ok-bg);color:var(--ok);}
+.chlog-tag.apply{background:#fbf1dc;color:#9a7a2a;}
+.chlog-clause{color:var(--navy-soft);font-size:12px;margin-top:2px;}
+.chlog-pager{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 2px;font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);margin-top:4px;}
+.chlog-pager button{background:#fff;border:1px solid var(--line);padding:3px 10px;border-radius:2px;cursor:pointer;font-family:inherit;font-size:12px;color:var(--navy);}
+.chlog-pager button:hover:not(:disabled){border-color:var(--navy-soft);}
+.chlog-pager button:disabled{opacity:.35;cursor:not-allowed;}
+.chlog-pager button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.chlog-pager .pg-info{margin:0 6px;}
+
+/* ===== 合同库列表 ===== */
+.list-wrap{max-width:1040px;margin:26px auto;padding:0 24px;}
+.list-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;}
+.list-head h1{font-family:'Noto Serif SC',serif;font-size:21px;color:var(--navy);}
+.list-sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.list-tools{display:flex;align-items:center;gap:10px;}
+.search{padding:8px 12px;border:1px solid var(--line-strong);border-radius:2px;font-size:13px;width:220px;font-family:inherit;background:var(--paper);}
+.search:focus{outline:none;border-color:var(--navy);}
+.filter{padding:8px 10px;border:1px solid var(--line-strong);border-radius:2px;font-size:13px;font-family:inherit;background:var(--paper);color:var(--ink-soft);}
+/* 状态多选筛选 */
+.ms-filter{position:relative;}
+.ms-btn{padding:8px 12px;border:1px solid var(--line-strong);border-radius:2px;font-size:13px;font-family:inherit;background:var(--paper);color:var(--ink-soft);cursor:pointer;min-width:120px;text-align:left;}
+.ms-btn:hover{border-color:var(--navy-soft);color:var(--navy);}
+.ms-menu{position:absolute;top:calc(100% + 4px);left:0;min-width:160px;background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:6px 0;z-index:25;}
+.ms-opt{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;color:var(--navy);cursor:pointer;}
+.ms-opt:hover{background:var(--paper-dim);}
+.ms-opt input{accent-color:var(--navy);margin:0;}
+.ctable{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);border-radius:2px;overflow:hidden;}
+.ctable th{font-size:11.5px;letter-spacing:1px;color:var(--ink-soft);text-transform:uppercase;text-align:left;padding:11px 16px;background:var(--paper-dim);border-bottom:1px solid var(--line);font-weight:700;}
+.ctable td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid var(--line);color:var(--ink);}
+.ctable tbody tr{cursor:pointer;}
+.ctable tbody tr:hover{background:var(--paper-dim);}
+.ctable .cname{font-family:'Noto Serif SC',serif;font-weight:600;color:var(--navy);}
+.ctable .no{font-variant-numeric:tabular-nums;color:var(--ink-soft);}
+.stt{font-size:11px;padding:2px 9px;border-radius:2px;}
+.stt-wait{background:#f0eee6;color:var(--ink-soft);} .stt-ai{background:#eaf0f6;color:var(--navy);} .stt-doing{background:var(--ins-bg);color:var(--ins);} .stt-done{background:var(--ok-bg);color:var(--ok);}
+.empty{padding:40px;text-align:center;color:var(--ink-soft);font-size:13px;}
+
+/* ===== 上传区 ===== */
+.upload-stage{max-width:760px;margin:50px auto;padding:0 20px;}
+.dropzone{background:var(--paper);border:2px dashed var(--line-strong);border-radius:6px;padding:46px 30px;text-align:center;}
+.dropzone .big{font-family:'Noto Serif SC',serif;font-size:19px;color:var(--navy);margin-bottom:8px;}
+.dropzone .small{font-size:13px;color:var(--ink-soft);margin-bottom:24px;}
+.mock-uploads{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.mock-btn{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:10px 18px;border-radius:3px;font-size:13.5px;}
+.mock-btn.alt{background:var(--paper);color:var(--ink-soft);border-color:var(--line-strong);}
+.mock-btn.alt:hover{border-color:var(--navy);color:var(--navy);}
+.fmt-hint{font-size:11.5px;color:var(--ink-soft);margin-top:18px;}
+.unsupport{margin-top:22px;background:var(--del-bg);border:1px solid #e7b6b1;border-radius:4px;padding:16px 18px;text-align:left;}
+.unsupport h4{color:var(--del);font-size:14px;margin-bottom:6px;}
+.unsupport p{font-size:12.5px;color:var(--ink-soft);}
+.unsupport .types{margin-top:10px;font-size:12.5px;}
+.unsupport .types b{color:var(--navy);}
+.unsupport .retry{margin-top:12px;}
+.unsupport .retry button{font-size:12.5px;border:1px solid var(--line-strong);background:#fff;padding:6px 13px;border-radius:2px;color:var(--ink-soft);}
+
+/* ===== 状态步骤条 ===== */
+.status-steps{background:#f0f1ee;border-bottom:1px solid var(--line);padding:9px 26px;display:flex;align-items:center;}
+.step{display:flex;align-items:center;gap:7px;}
+.step .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid #d5d8d2;display:flex;align-items:center;justify-content:center;font-size:10px;color:#b0b6ae;background:#fff;}
+.step .lbl{font-size:12px;color:#b0b6ae;}
+.step.done .dot{background:#c5ccd8;border-color:#c5ccd8;color:#fff;}
+.step.done .lbl{color:#8b939e;}
+.step.current .dot{background:var(--gold);border-color:var(--gold);color:var(--navy-deep);font-weight:700;}
+.step.current .lbl{color:var(--navy);font-weight:600;}
+.step-line{width:36px;height:1px;background:#d5d8d2;margin:0 8px;}
+.step-line.done{background:#c5ccd8;}
+.returned-tag{margin-left:16px;font-size:11.5px;background:#fbf3e0;color:var(--risk-mid);padding:3px 10px;border-radius:2px;}
+
+/* ===== 主体两栏 / 三栏（含全文预览 F1 mock）===== */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);flex:1;min-height:0;overflow:hidden;}
+.layout.has-preview{grid-template-columns:230px minmax(0,1fr) 300px;}
+.doc-preview{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;}
+.doc-preview-head{padding:12px 16px 10px;border-bottom:1px solid var(--line);background:var(--paper-dim);flex-shrink:0;}
+.doc-preview-head h3{font-family:'Noto Serif SC',serif;font-size:14px;color:var(--navy);margin:0 0 4px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.doc-preview-tag{font-size:10px;background:#eef0f4;color:var(--navy-soft);padding:2px 8px;border-radius:2px;font-family:'Noto Sans SC',sans-serif;font-weight:500;white-space:nowrap;}
+.doc-preview-note{font-size:11px;color:var(--ink-soft);padding:8px 16px;border-bottom:1px dashed var(--line);margin:0;line-height:1.5;flex-shrink:0;}
+.doc-preview-body{flex:1;overflow-y:auto;padding:14px 16px 28px;min-height:0;}
+.doc-block{margin-bottom:16px;padding:8px 10px;border-radius:2px;border:1px solid transparent;scroll-margin-top:8px;}
+.doc-block h4{font-family:'Noto Serif SC',serif;font-size:13.5px;color:var(--navy);margin:0 0 6px;font-weight:600;}
+.doc-block p{font-family:'Noto Serif SC',serif;font-size:13.5px;line-height:1.85;text-align:justify;color:var(--ink);margin:0;}
+.doc-title{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:700;text-align:center;color:var(--navy);margin-bottom:10px;}
+.doc-meta{font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;}
+.doc-block.doc-changed{background:#fffcf5;border-color:var(--line);}
+.doc-block.doc-changed.risk-high{background:#fffdf0;box-shadow:inset 3px 0 0 var(--risk-high);}
+.doc-block.doc-changed.risk-mid{background:#fffdf5;box-shadow:inset 3px 0 0 var(--risk-mid);}
+.doc-block.doc-active{background:#fbf1dc !important;border-color:var(--gold) !important;box-shadow:inset 3px 0 0 var(--gold) !important;}
+.doc-block.doc-deleted{background:#fdf8f8;border-color:#f0dede;}
+.doc-block.doc-deleted .doc-old{text-decoration:line-through;color:var(--ink-soft);}
+.doc-del-note{font-size:12px;color:var(--del);margin-top:6px;font-style:italic;}
+.doc-block.doc-add{background:#f7faf4;box-shadow:inset 3px 0 0 var(--ok);}
+.sidenav{background:var(--paper-dim);border-right:1px solid var(--line);padding:16px 0;overflow-y:auto;min-height:0;height:100%;}
+.sidenav h2{font-size:11px;letter-spacing:1px;color:#a8b0bc;text-transform:uppercase;padding:0 18px 10px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:13px;cursor:pointer;border-left:3px solid transparent;color:#8b939e;}
+.nav-item:hover{background:rgba(255,255,255,.55);color:var(--ink-soft);}
+.nav-item.active{background:#fff;border-left-color:var(--gold);color:var(--ink);font-weight:500;}
+.nav-item.focus .nav-clause{color:var(--navy);font-weight:500;}
+.nav-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-high{background:var(--risk-high);} .dot-mid{background:var(--risk-mid);} .dot-low{background:var(--risk-low);}
+.nav-clause{font-variant-numeric:tabular-nums;}
+.nav-item .st{margin-left:auto;font-size:10px;padding:0 5px;border-radius:2px;}
+.st-acc{background:var(--ok-bg);color:var(--ok);} .st-rej{background:var(--del-bg);color:var(--del);}
+
+.main{padding:20px 24px 56px;overflow-y:auto;background:var(--paper);min-height:0;height:100%;}
+.risk-summary{background:#fff;border:1px solid var(--line);border-top:2px solid var(--navy);border-radius:3px;padding:18px 20px 16px;margin-bottom:20px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+.risk-summary h2{font-family:'Noto Serif SC',serif;font-size:15px;color:var(--navy);margin-bottom:6px;}
+.risk-summary .lead{font-size:12px;color:#a8b0bc;margin-bottom:16px;line-height:1.6;}
+.risk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:2px;overflow:hidden;}
+.risk-cell{background:#fff;padding:14px 15px;}
+.risk-cell .field{font-size:11.5px;color:#a8b0bc;margin-bottom:8px;}
+.risk-cell .change{font-family:'Noto Serif SC',serif;font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px;}
+.change .from{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:var(--del);}
+.change .to{color:var(--navy);font-weight:600;} .change .arr{color:var(--line-strong);}
+.risk-cell .tag{display:inline-block;margin-top:7px;font-size:11px;padding:1px 8px;border-radius:2px;}
+.tag-high{background:var(--del-bg);color:var(--risk-high);} .tag-mid{background:#fbf3e0;color:var(--risk-mid);} .tag-low{background:var(--ok-bg);color:var(--ok);}
+
+.clause-list{display:flex;flex-direction:column;gap:16px;}
+.clause{background:var(--paper);border:1px solid var(--line);border-radius:2px;overflow:hidden;scroll-margin-top:14px;}
+.clause.accepted{border-color:#bcd3ad;} .clause.rejected{opacity:.7;}
+.clause-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--paper-dim);border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap;}
+.clause-title{font-family:'Noto Serif SC',serif;font-size:14.5px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:9px;flex:1;min-width:0;flex-wrap:wrap;}
+.clause-flag{font-size:11px;padding:2px 8px;border-radius:2px;font-weight:500;}
+.flag-mod{background:var(--ins-bg);color:var(--ins);} .flag-add{background:var(--ok-bg);color:var(--ok);} .flag-del{background:var(--del-bg);color:var(--del);}
+.col.del-col{background:#fdf8f8;}
+.clause-text.del-empty{color:var(--del);font-style:italic;}
+.legal-row-highlight{background:#fbf1dc !important;animation:legalFlash 1.2s ease;}
+@keyframes legalFlash{0%,100%{background:#fbf1dc;}50%{background:#fff8e6;}}
+.workbench-empty{background:var(--paper);border:1px dashed var(--line-strong);border-radius:4px;padding:48px 32px;text-align:center;margin-top:8px;}
+.workbench-empty h3{font-family:'Noto Serif SC',serif;color:var(--navy);font-size:17px;margin-bottom:10px;}
+.workbench-empty p{font-size:13.5px;color:var(--ink-soft);max-width:420px;margin:0 auto 20px;line-height:1.7;}
+.workbench-empty .empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.workbench-empty button{border:1px solid var(--navy);background:var(--navy);color:#fff;padding:8px 18px;border-radius:2px;font-size:13px;}
+.workbench-empty button.outline{background:#fff;color:var(--navy);}
+.upload-opts{text-align:left;max-width:480px;margin:0 auto 22px;padding:16px 18px;background:var(--paper-dim);border:1px solid var(--line);border-radius:4px;}
+.upload-opts .opt-title{font-size:12px;color:var(--ink-soft);margin-bottom:10px;letter-spacing:.5px;}
+.upload-mode{display:flex;gap:16px;margin-bottom:10px;}
+.upload-mode label{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--navy);cursor:pointer;}
+.upload-target{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
+.upload-target select{width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:2px;font-size:13px;font-family:inherit;background:#fff;}
+.upload-target .hint{font-size:11.5px;color:var(--ink-soft);margin-top:6px;}
+.done-flag{font-size:11px;padding:2px 8px;border-radius:2px;}
+.clause-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;border-left:1px solid var(--line);padding-left:12px;}
+.ca-btn{font-size:12px;padding:4px 11px;border-radius:2px;border:1px solid var(--line-strong);background:var(--paper);color:var(--ink-soft);}
+.ca-btn.accept:hover{border-color:var(--ins);color:var(--ins);}
+.ca-btn.reject:hover{border-color:var(--del);color:var(--del);}
+.ca-btn.on-acc{background:var(--ok-bg);border-color:#bcd3ad;color:var(--ok);}
+.ca-btn.on-rej{background:var(--del-bg);border-color:#e7b6b1;color:var(--del);}
+.clause-body{display:grid;grid-template-columns:1fr 1fr;}
+.col{padding:14px 16px;}
+.col.old{border-right:1px solid var(--line);background:#fcfbf9;}
+.col-label{font-size:11px;letter-spacing:1px;color:var(--ink-soft);text-transform:uppercase;margin-bottom:8px;font-weight:700;}
+.clause-text{font-family:'Noto Serif SC',serif;font-size:14px;line-height:1.9;color:var(--ink);text-align:justify;}
+del.d{color:var(--del);background:var(--del-bg);text-decoration:line-through;padding:0 2px;border-radius:2px;}
+ins.i{color:var(--ins);background:var(--ins-bg);text-decoration:underline;text-underline-offset:3px;padding:0 2px;border-radius:2px;}
+.col.added-full{grid-column:1/-1;background:#f7faf4;}
+.interpret,.suggest,.legal-ref{border-top:1px dashed var(--line-strong);font-size:13px;color:var(--ink-soft);}
+.interpret,.legal-ref{padding:11px 16px;display:flex;gap:11px;align-items:flex-start;}
+.interpret{background:#fbfaf7;}
+.suggest{background:#f7faf7;padding:12px 16px 14px;}
+.suggest-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.suggest-label{font-size:10px;letter-spacing:.5px;color:var(--gold);border:1px solid var(--gold);border-radius:2px;padding:2px 8px;font-weight:700;flex-shrink:0;line-height:1.4;}
+.suggest-text{line-height:1.65;color:var(--ink);font-size:13px;margin:0 0 8px;}
+.suggest-hint{font-size:11px;color:var(--ink-soft);line-height:1.5;margin:0;}
+.apply-btn{font-size:12px;padding:4px 12px;border-radius:2px;border:1px solid var(--gold);background:var(--navy);color:#fff;white-space:nowrap;flex-shrink:0;line-height:1.4;}
+.apply-btn:hover:not(:disabled){background:var(--navy-soft);}
+.apply-btn:disabled{background:#fbf1dc;border-color:var(--gold);color:#9a7a2a;cursor:default;}
+.apply-btn.outline{background:var(--paper);color:var(--navy);border-color:var(--line-strong);}
+.apply-btn.outline:hover{background:#f5f6f8;}
+.legal-ref{background:#f7f9fc;}
+.interpret .ai-mark,.legal-ref .ai-mark{font-size:10px;letter-spacing:.5px;color:var(--gold);border:1px solid var(--gold);border-radius:2px;padding:1px 6px;flex-shrink:0;margin-top:2px;font-weight:700;}
+.legal-ref .ai-mark{color:var(--navy);border-color:var(--navy-soft);}
+.legal-ref a{color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--navy-soft);}
+.legal-ref a:hover{color:var(--gold);border-color:var(--gold);}
+.interpret b,.suggest b{color:var(--ink);font-weight:600;}
+.annotation{margin:0 16px 12px;background:#fffdf5;border:1px solid #ece4c9;border-left:3px solid var(--gold);padding:8px 12px;font-size:12.5px;color:var(--ink-soft);}
+.annotation b{color:var(--navy);}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:3px;font-size:13px;opacity:0;transition:.25s;z-index:60;}
+.toast.show{opacity:1;}
+.reviewing{display:flex;align-items:center;gap:10px;color:var(--ink-soft);font-size:13px;padding:8px 0 18px;}
+.spin{width:14px;height:14px;border:2px solid var(--line-strong);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- ============ 登录页 ============ -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">明　衡</div>
+    <div class="login-sub">合同审核 AI · 初审工作台</div>
+    <div class="field"><label>账号</label><input id="loginUser" value="liyingying" autocomplete="off"></div>
+    <div class="field"><label>密码</label><input id="loginPwd" type="password" value="******"></div>
+    <button class="login-btn" onclick="doLogin()">登 录</button>
+    <div class="login-hint">演示原型 · 任意账号密码均可登录</div>
+  </div>
+</div>
+
+<!-- ============ 岗位选择弹层 ============ -->
+<div id="roleModal" class="modal-mask hidden">
+  <div class="modal">
+    <h3>请选择你的岗位</h3>
+    <p class="lead">系统会按你的岗位，进入合同后自动定位到你关注的条款段落，不必逐页翻看整篇。</p>
+    <div class="role-grid role-grid-4" id="roleGrid">
+      <div class="role-card" data-post="法务" onclick="pickPost('法务')">
+        <div class="rname">法务</div>
+        <div class="rdesc">合同审核责任人<br>风险条款 / 关键信息</div>
+      </div>
+      <div class="role-card" data-post="销售" onclick="pickPost('销售')">
+        <div class="rname">销售</div>
+        <div class="rdesc">提交合同<br>交货 / 标的 / 价格</div>
+      </div>
+      <div class="role-card" data-post="商务" onclick="pickPost('商务')">
+        <div class="rname">商务</div>
+        <div class="rdesc">对接客户<br>商务信息 / 条款回填</div>
+      </div>
+      <div class="role-card" data-post="财务" onclick="pickPost('财务')">
+        <div class="rname">财务</div>
+        <div class="rdesc">资金把关<br>付款 / 结算 / 违约金</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <label class="remember"><input type="checkbox" id="rememberChk"> 记住，下次不再选择</label>
+      <button class="confirm-btn" onclick="confirmPost()">进入系统</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 条款批注弹层（F5 留痕）============ -->
+<div id="annotateModal" class="modal-mask hidden" onclick="if(event.target===this)closeAnnotateModal()">
+  <div class="modal" style="width:480px;" onclick="event.stopPropagation()">
+    <h3 id="annotateModalTitle">添加批注</h3>
+    <p class="lead">批注将写入变更留痕，团队成员均可追溯查看。</p>
+    <div class="annotate-clause">
+      <div id="annotateClauseTitle">—</div>
+      <div class="annotate-meta" id="annotateClauseMeta">留痕对象 · 当前审阅版本</div>
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="annotateInput">批注内容</label>
+      <textarea id="annotateInput" rows="4" placeholder="例：账期偏长，建议与对方协商缩短；或说明不接受该修改的理由…"></textarea>
+    </div>
+    <div class="modal-foot" style="margin-top:20px;">
+      <button type="button" id="annotateDeleteBtn" class="ca-btn danger hidden" onclick="deleteAnnotate()">删除批注</button>
+      <div class="modal-foot-actions">
+        <button type="button" class="ca-btn" onclick="closeAnnotateModal()">取消</button>
+        <button type="button" class="confirm-btn" onclick="saveAnnotate()">保存批注</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 复核完成确认 ============ -->
+<div id="reviewDoneModal" class="modal-mask hidden">
+  <div class="modal" style="width:440px;">
+    <h3>是否完成复核？</h3>
+    <p class="lead" id="reviewDoneLead">是否将当前版本标记为「复核完成」？</p>
+    <div class="modal-foot">
+      <button class="ca-btn" onclick="closeReviewDone(false)">尚未完成</button>
+      <button class="confirm-btn" onclick="closeReviewDone(true)">复核完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 初审后“疑似同一份合同”提醒（B+C）============ -->
+<div id="matchModal" class="modal-mask hidden">
+  <div class="modal" style="width:480px;">
+    <h3>疑似为已有合同的新版本</h3>
+    <p class="lead">初审解析时检测到，这份合同与库内已有合同高度相似。是否将其关联为该合同的新版本，以便做版本比对？</p>
+    <div style="background:var(--paper-dim);border:1px solid var(--line);border-radius:3px;padding:12px 14px;font-size:13px;">
+      <div style="font-family:'Noto Serif SC',serif;font-weight:600;color:var(--navy);">采购合同 · 每日互动股份有限公司</div>
+      <div style="color:var(--ink-soft);margin-top:4px;">编号 CG-2026-0627　·　相似度 <b style="color:var(--ins)">92%</b>　·　当前 v2</div>
+    </div>
+    <div class="modal-foot">
+      <button class="ca-btn" onclick="closeMatch()">作为新合同</button>
+      <button class="confirm-btn" onclick="linkVersion()">关联为新版本</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 全部版本变更记录 ============ -->
+<div id="changeLogModal" class="modal-mask hidden">
+  <div class="modal" style="width:640px;">
+    <h3>全部版本变更记录</h3>
+    <p class="lead" id="chlogMeta">编号 —　·　当前 —　·　共 — 个版本</p>
+    <div style="font-family:'Noto Serif SC',serif;font-weight:600;color:var(--navy);font-size:15px;" id="chlogTitle">—</div>
+    <div class="chlog-scroll" id="chlogBody"></div>
+    <div class="modal-foot"><div></div><button class="ca-btn" onclick="closeChangeLog()">关闭</button></div>
+  </div>
+</div>
+
+<!-- ============ 新增用户弹层（F16 账号分配制）============ -->
+<div id="userModal" class="modal-mask hidden">
+  <div class="modal" style="width:460px;">
+    <h3>新增用户</h3>
+    <p class="lead">由管理员开通账号；用户首次登录后可按岗位定位关注条款。初始密码将要求首次登录修改。</p>
+    <div class="field"><label>用户名（登录名）</label><input id="nuName" placeholder="如 zhangming"></div>
+    <div class="field"><label>姓名</label><input id="nuFull" placeholder="如 张明"></div>
+    <div class="field"><label>岗位</label>
+      <select id="nuPost" class="filter" style="width:100%;">
+        <option>销售</option><option>法务</option><option>商务</option><option>财务</option>
+      </select>
+    </div>
+    <div class="field"><label>角色</label>
+      <select id="nuRole" class="filter" style="width:100%;">
+        <option>普通用户</option><option>管理员</option><option>维护者</option>
+      </select>
+    </div>
+    <div class="field"><label>初始密码</label><input id="nuPwd" value="Init@123" type="text"></div>
+    <div class="modal-foot">
+      <button class="ca-btn" onclick="closeUserModal()">取消</button>
+      <button class="confirm-btn" onclick="addUser()">开通账号</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 应用 ============ -->
+<div id="appView" class="hidden">
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button id="navBack" class="nav-back hidden" type="button" onclick="goList()">← 全部合同</button>
+      <div class="brand" onclick="goList()" title="返回全部合同"><span class="mark">明　衡</span><span class="sub">合同审阅工作台</span></div>
+    </div>
+    <div class="topbar-right"></div>
+  </div>
+
+  <div class="app-body">
+  <!-- 左侧模块菜单 -->
+  <nav class="sidemenu" id="sideMenu">
+    <div class="menu-item active" data-menu="list" onclick="menuGo('list')"><span class="mi-ico">📁</span><span>全部合同</span></div>
+    <div class="menu-sep">知识库</div>
+    <div class="menu-item" data-menu="legal" onclick="menuGo('legal')"><span class="mi-ico">⚖</span><span>法律法规</span></div>
+    <div class="menu-item" data-menu="rule" onclick="menuGo('rule')"><span class="mi-ico">📐</span><span>审查规则</span></div>
+    <div class="menu-sep">系统管理</div>
+    <div class="menu-item" data-menu="user" onclick="menuGo('user')"><span class="mi-ico">👤</span><span>用户管理</span></div>
+    <div class="menu-item" data-menu="audit" onclick="menuGo('audit')"><span class="mi-ico">🛡</span><span>审计日志</span></div>
+    <div class="menu-item" data-menu="system" onclick="menuGo('system')"><span class="mi-ico">⚙</span><span>系统配置</span></div>
+
+    <!-- 个人信息（左下角）-->
+    <div class="side-user" id="sideUser" onclick="toggleUserMenu(event)">
+      <div class="su-avatar" id="suAvatar">李</div>
+      <div class="su-info">
+        <div class="su-name" id="suName">李颖莹</div>
+        <div class="su-post" id="suPost">岗位：法务</div>
+      </div>
+      <span class="su-caret">▾</span>
+      <div class="su-menu hidden" id="suMenu">
+        <div class="su-mi" onclick="goMyFocus();closeUserMenu();">我的关注点</div>
+        <div class="su-mi" onclick="openRoleModal();closeUserMenu();">更换岗位</div>
+        <div class="su-mi" onclick="logout()">退出登录</div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content-area">
+  <!-- 合同列表（首页 F18） -->
+  <div id="listView" class="list-wrap hidden">
+    <div class="list-head">
+      <div>
+        <h1 class="serif">全部合同</h1>
+        <div class="list-sub">已上传合同的留存与再进入　·　共 <span id="listCount">0</span> 份</div>
+      </div>
+      <div class="list-tools">
+        <input id="listSearch" class="search" placeholder="搜索合同名称 / 编号…" oninput="renderList()">
+        <div class="ms-filter" id="statusFilter">
+          <button type="button" class="ms-btn" id="statusFilterBtn" onclick="toggleStatusMenu(event)"><span id="statusFilterLabel">全部状态</span> ▾</button>
+          <div class="ms-menu hidden" id="statusFilterMenu">
+            <label class="ms-opt"><input type="checkbox" value="AI初审中" onchange="onStatusFilterChange()">AI初审中</label>
+            <label class="ms-opt"><input type="checkbox" value="待人工复核" onchange="onStatusFilterChange()">待人工复核</label>
+            <label class="ms-opt"><input type="checkbox" value="复核完成" onchange="onStatusFilterChange()">复核完成</label>
+          </div>
+        </div>
+        <button class="btn-export" onclick="goUpload()">＋ 上传合同</button>
+      </div>
+    </div>
+    <table class="ctable">
+      <thead><tr><th>合同名称</th><th>编号</th><th>类型</th><th>状态</th><th>版本</th><th>更新时间</th><th>上传人</th><th style="width:72px;">操作</th></tr></thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 上传阶段 -->
+  <div id="uploadStage" class="upload-stage hidden">
+    <div class="dropzone">
+      <div class="big serif">上传合同开始初审</div>
+      <div class="small">支持 Word（.doc/.docx）与 PDF（.pdf）· MVP 先支持采购合同</div>
+      <div class="upload-opts">
+        <div class="opt-title">上传归属（F1 · 决定 F3 比对基准）</div>
+        <div class="upload-mode">
+          <label><input type="radio" name="uploadMode" value="new" checked onchange="setUploadMode('new')"> 新合同</label>
+          <label><input type="radio" name="uploadMode" value="version" onchange="setUploadMode('version')"> 已有合同的新版本</label>
+        </div>
+        <div id="uploadTargetRow" class="upload-target hidden">
+          <select id="uploadTarget" onchange="uploadTargetId=this.value"></select>
+          <div class="hint">比对基准 = 所选合同的<strong>当前版本</strong>（上一版作 diff 参照）</div>
+        </div>
+      </div>
+      <div class="mock-uploads">
+        <button class="mock-btn" onclick="uploadDemo('purchase')">📄 模拟上传并解析</button>
+        <button class="mock-btn alt" onclick="uploadDemo('other')">📄 上传其它类型（示例）</button>
+      </div>
+      <div class="fmt-hint">＊ 演示用：点击上方按钮模拟上传与解析</div>
+      <div id="unsupportBox" class="unsupport hidden">
+        <h4>暂无法识别 / 暂不支持该合同类型</h4>
+        <p>系统未能将该文件识别为当前支持的合同类型，已暂停审核。</p>
+        <div class="types">当前支持的合同类型：<b>采购合同</b>（更多类型陆续支持）</div>
+        <div class="retry">
+          <button onclick="forcePurchase()">仍按「采购合同」处理</button>
+          <button onclick="resetUpload()">重新上传</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- docbar -->
+  <div id="docbar" class="docbar hidden">
+    <div class="docbar-left">
+      <h1 id="docTitle">采购合同 · 每日互动股份有限公司</h1>
+      <div class="docbar-sub">
+        <div class="docbar-tags">
+          <span class="type-badge">已识别：采购合同</span>
+          <span class="enc-badge" title="数据静态加密存储">🔒 已加密存储</span>
+        </div>
+        <div class="meta" id="docMeta"></div>
+      </div>
+    </div>
+    <div class="docbar-actions">
+      <div class="stance-switch" id="stanceSwitch">
+        <div class="stance-row">
+          <span class="lbl">审阅立场</span>
+          <div class="seg" id="stanceSeg">
+            <button type="button" data-role="buyer" onclick="switchStance('buyer')">甲方</button>
+            <button type="button" data-role="seller" onclick="switchStance('seller')">乙方</button>
+            <button type="button" data-role="neutral" onclick="switchStance('neutral')">中立</button>
+          </div>
+        </div>
+        <div id="stanceLockHint" class="stance-lock-hint hidden">已有复审留痕，立场已锁定</div>
+      </div>
+      <div class="docbar-divider"></div>
+      <div class="versions">
+        <span class="vbadge">v1 销售提交（基准）</span>
+        <span class="ver-arrow">→</span>
+        <span class="vbadge new">v2 当前</span>
+        <div class="export-group" id="exportGroup">
+          <button class="btn-export" onclick="toggleExportMenu(event)">导出 ▾</button>
+          <div class="export-menu hidden" id="exportMenu">
+            <div class="export-mi" onclick="exportContract('docx')">导出 Word <small>(.docx)</small></div>
+            <div class="export-mi" onclick="exportContract('pdf')">导出 PDF <small>(.pdf)</small></div>
+            <div class="export-mi" onclick="exportContract('report')">导出变更报告</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 状态步骤条 -->
+  <div id="statusSteps" class="status-steps hidden"></div>
+
+  <!-- 工作台两栏 -->
+  <div id="workbench" class="layout hidden">
+    <nav class="sidenav">
+      <h2 id="navTitle">本轮变更</h2>
+      <div id="navList"></div>
+    </nav>
+    <main class="main">
+      <section class="risk-summary">
+        <h2>关键字段变更摘要</h2>
+        <p class="lead" id="summaryLead">系统自动监控金额、账期、违约金、交货期等关键字段，以下为本轮（基准 v1 → 当前 v2）检测到的核心变更。</p>
+        <div class="risk-grid" id="riskGrid"></div>
+      </section>
+      <div id="reviewing" class="reviewing hidden"><span class="spin"></span><span id="reviewingText">AI 正在按当前立场重新初审…</span></div>
+      <div class="clause-list" id="clauseList"></div>
+    </main>
+    <aside id="docPreview" class="doc-preview hidden">
+      <div class="doc-preview-head">
+        <h3>全文预览 <span class="doc-preview-tag" id="docPreviewVer">v2</span></h3>
+      </div>
+      <p class="doc-preview-note">F1 在线查看（演示 mock）· 标黄为 AI 识别风险 · 点击左侧变更项可定位</p>
+      <div class="doc-preview-body" id="docPreviewBody"></div>
+    </aside>
+  </div>
+
+  <!-- 审计日志 -->
+  <div id="auditView" class="list-wrap hidden">
+    <div class="list-head">
+      <div>
+        <h1 class="serif">审计日志</h1>
+        <div class="list-sub">记录谁 · 什么时间 · 做了什么（合规留痕，仅管理员可见）</div>
+      </div>
+      <div class="list-tools">
+        <input id="auditSearch" class="search" placeholder="搜索用户 / 动作 / 对象…" oninput="renderAudit()">
+      </div>
+    </div>
+    <table class="ctable">
+      <thead><tr><th>时间</th><th>用户</th><th>岗位</th><th>动作</th><th>对象</th><th>IP</th></tr></thead>
+      <tbody id="auditBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 用户管理 -->
+  <div id="userView" class="list-wrap hidden">
+    <div class="list-head">
+      <div>
+        <h1 class="serif">用户管理</h1>
+        <div class="list-sub">账号分配制：由管理员开通账号、分配岗位与角色（后续可对接公司统一账户）</div>
+      </div>
+      <div class="list-tools">
+        <input id="userSearch" class="search" placeholder="搜索用户名 / 姓名…" oninput="renderUsers()">
+        <button class="btn-export" onclick="openUserModal()">＋ 新增用户</button>
+      </div>
+    </div>
+    <table class="ctable">
+      <thead><tr><th>用户名</th><th>姓名</th><th>岗位</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody id="userBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 知识库（法律法规 F7 / 审查规则 F8/F9，静态导入、暂只读）-->
+  <div id="knowledgeView" class="list-wrap hidden">
+    <div class="list-head">
+      <div>
+        <h1 class="serif" id="kbTitle">法律法规</h1>
+        <div class="list-sub" id="kbSub">AI 审查所依据的法律法规（静态导入，暂只读、不支持录入）</div>
+      </div>
+    </div>
+
+    <!-- 法律法规 -->
+    <div class="kb-pane" data-kb="legal">
+      <div class="list-tools" style="margin:0 0 12px;">
+        <input id="legalSearch" class="search" placeholder="搜索法律 / 条号 / 关键词…" oninput="renderLegal()">
+        <select id="legalLaw" class="filter" onchange="renderLegal()">
+          <option value="">全部法律</option>
+          <option value="民法典">民法典</option>
+          <option value="数据安全法">数据安全法</option>
+          <option value="个人信息保护法">个人信息保护法</option>
+        </select>
+      </div>
+      <p class="kb-note">初审时按条款类型/标签筛选后注入 prompt 并回链库内条目（防杜撰）。</p>
+      <table class="ctable">
+        <thead><tr><th style="width:140px;">法律/法规</th><th style="width:90px;">条号</th><th>内容</th><th style="width:160px;">适用标签</th></tr></thead>
+        <tbody id="legalBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 审查规则 -->
+    <div class="kb-pane hidden" data-kb="rule">
+      <div class="list-tools" style="margin:0 0 12px;">
+        <input id="ruleSearch" class="search" placeholder="搜索规则名 / 关键词…" oninput="renderRule()">
+        <select id="ruleLevel" class="filter" onchange="renderRule()">
+          <option value="">全部风险等级</option>
+          <option value="高">高风险</option>
+          <option value="中">中风险</option>
+          <option value="低">低风险</option>
+        </select>
+      </div>
+      <p class="kb-note">确定性审查规则，与模型互补做防遗漏校验。</p>
+      <table class="ctable rule-table">
+        <thead><tr><th class="col-name">规则名称</th><th class="col-type">适用类型</th><th class="col-cond">触发条件</th><th class="col-risk">风险</th><th class="col-sug">建议</th></tr></thead>
+        <tbody id="ruleBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 系统配置（整页，模型配置为其中一项）-->
+  <div id="systemView" class="list-wrap hidden">
+    <div class="list-head">
+      <div>
+        <h1 class="serif">系统配置</h1>
+        <div class="list-sub">模型、安全存储、数据留存等系统级配置</div>
+      </div>
+    </div>
+    <div class="sys-page">
+      <div class="sys-wrap">
+        <div class="sys-nav">
+          <div class="sys-tab active" data-tab="model" onclick="sysTab('model')">模型配置</div>
+          <div class="sys-tab" data-tab="focus" onclick="sysTab('focus')">岗位关注点</div>
+          <div class="sys-tab" data-tab="security" onclick="sysTab('security')">安全与存储</div>
+          <div class="sys-tab" data-tab="retention" onclick="sysTab('retention')">数据留存</div>
+          <div class="sys-tab" data-tab="about" onclick="sysTab('about')">关于</div>
+        </div>
+        <div class="sys-body">
+          <!-- 模型配置（F15）-->
+          <div class="sys-pane" data-pane="model">
+            <h3>模型配置</h3>
+            <p class="lead">配置模型网关与默认模型。生产默认走内网本地 DeepSeek（数据不出网）；敏感合同固定使用本地模型。</p>
+            <div class="field"><label>网关地址（Base URL，OpenAI 兼容）</label><input id="cfgBase" value="http://10.0.0.21:4000/v1"></div>
+            <div class="field"><label>API Key</label><input id="cfgKey" type="password" placeholder="sk-……（加密存储，不回显明文）"></div>
+            <div class="field"><label>默认模型（演示可用互联网模型）</label>
+              <select id="cfgModel" class="filter" style="width:100%;">
+                <option value="local-deepseek">本地 DeepSeek（默认 · 自主可控）</option>
+                <option value="deepseek-api">DeepSeek 官方 API</option>
+                <option value="glm-4">GLM（智谱）</option>
+                <option value="gpt-4o">GPT（OpenAI）</option>
+                <option value="relay">中转站（自定义 relay）</option>
+              </select>
+            </div>
+            <div class="field"><label>敏感合同模型（强制本地，不可外发）</label><input value="本地 DeepSeek（锁定）" disabled style="background:#eee;color:#888;"></div>
+            <div class="modal-foot">
+              <button class="ca-btn" onclick="testModel()">测试连通性</button>
+              <button class="confirm-btn" onclick="saveSettings()">保存</button>
+            </div>
+          </div>
+          <!-- 岗位关注点（管理员层：岗位→关注的条款类型标签）-->
+          <div class="sys-pane hidden" data-pane="focus">
+            <h3>岗位关注点</h3>
+            <p class="lead">按"条款类型标签"配置每个岗位默认关注哪类条款（跨合同通用，不绑定具体条款号）。进入合同后据此自动定位/高亮。</p>
+            <div class="focus-bar">
+              <span class="hint" style="margin:0;">未配置的岗位将由 AI 按合同类型自动推荐默认关注点。</span>
+              <button class="ca-btn" onclick="aiFocusDefault()">✨ AI 生成默认配置</button>
+            </div>
+            <div id="focusMatrix"></div>
+            <div class="modal-foot"><div></div><button class="confirm-btn" onclick="saveFocus()">保存</button></div>
+          </div>
+          <!-- 安全与存储 -->
+          <div class="sys-pane hidden" data-pane="security">
+            <h3>安全与存储</h3>
+            <p class="lead">合同属机密、可能含个人信息，默认按"最小权限 + 加密 + 留痕"落地（涉数据安全法 / 个人信息保护法）。</p>
+            <div class="kv"><span>传输加密</span><b class="on">TLS 全链路（含内网）</b></div>
+            <div class="kv"><span>静态加密</span><b class="on">磁盘/卷加密 + 文件存储 SSE</b></div>
+            <div class="kv"><span>敏感合同外发</span><b class="on">禁止（强制本地 DeepSeek）</b></div>
+            <div class="kv"><span>访问控制</span><b class="on">账号分配制 + RBAC 最小权限</b></div>
+            <div class="kv"><span>操作审计</span><b class="on">全量留痕（见「审计日志」）</b></div>
+            <div class="kv"><span>下载水印 / 防外传</span><b class="off">按需开启（P1）</b></div>
+            <p class="hint">说明：以上为默认安全基线，具体强度（字段级加密、水印等）随公司安全/合规要求确定。</p>
+          </div>
+          <!-- 数据留存 -->
+          <div class="sys-pane hidden" data-pane="retention">
+            <h3>数据留存</h3>
+            <p class="lead">合同与审计记录的留存与销毁周期（合规留存）。</p>
+            <div class="field"><label>合同留存期限</label>
+              <select class="filter" style="width:100%;"><option>长期保存（默认）</option><option>5 年</option><option>3 年</option></select>
+            </div>
+            <div class="field"><label>审计日志留存期限</label>
+              <select class="filter" style="width:100%;"><option>≥ 6 个月（默认）</option><option>1 年</option><option>3 年</option></select>
+            </div>
+            <div class="field"><label>备份加密</label>
+              <select class="filter" style="width:100%;"><option>开启（默认）</option><option>关闭</option></select>
+            </div>
+            <div class="modal-foot"><div></div><button class="confirm-btn" onclick="saveSettings()">保存</button></div>
+          </div>
+          <!-- 关于 -->
+          <div class="sys-pane hidden" data-pane="about">
+            <h3>关于</h3>
+            <p class="lead">明衡 · AI 合同审阅系统</p>
+            <div class="kv"><span>版本</span><b>MVP 原型 v1</b></div>
+            <div class="kv"><span>部署形态</span><b>办公网内网（不暴露公网）</b></div>
+            <div class="kv"><span>默认推理</span><b>本地 DeepSeek（自主可控）</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的关注点（个人微调层）-->
+  <div id="myFocusView" class="list-wrap hidden">
+    <div class="list-head">
+      <div>
+        <h1 class="serif">我的关注点</h1>
+        <div class="list-sub">在你所在岗位（<span id="mfPost">法务</span>）的默认关注点基础上，按个人习惯增减；只影响你自己的定位/高亮。</div>
+      </div>
+    </div>
+    <div class="sys-page" style="max-width:680px;">
+      <div style="padding:22px 24px;">
+        <p class="kb-note">勾选 = 你关注（进入合同自动定位）。带「默认」标记的来自岗位配置或 AI 推荐；你可以取消或额外勾选其它类型。</p>
+        <div id="myFocusList"></div>
+        <div class="modal-foot"><button class="ca-btn" onclick="resetMyFocus()">恢复岗位默认</button><button class="confirm-btn" onclick="saveMyFocus()">保存</button></div>
+      </div>
+    </div>
+  </div>
+  </div><!-- /content-area -->
+  </div><!-- /app-body -->
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============ 状态 ============ */
+const state = { user:null, post:'法务', stance:'buyer', contractLoaded:false, currentStatus:'待人工复核', currentContractId:null, reviewDirty:false, legalHighlightId:null, docHighlightId:null };
+const STATUS_STEPS = ['AI初审中','待人工复核','复核完成'];
+const STATUS_OPTS = ['AI初审中','待人工复核','复核完成'];
+const ROLE_NAME = { buyer:'甲方（采购方）', seller:'乙方（供方）', neutral:'中立方' };
+// 岗位 → 关注的条款（用于“按岗位定位段落”F14）
+const POST_FOCUS = {
+  '法务':['4-1','5-1','3-2','5-2'],
+  '销售':['5-2'],               // 销售关注交货/标的相关
+  '商务':['4-1'],               // 商务关注商务信息/付款
+  '财务':['4-1','5-1'],         // 财务关注付款、结算、违约金
+};
+
+/* ============ 合同库（首页 F18 mock 数据）============ */
+let contractList = [
+  { id:'c1', name:'采购合同 · 每日互动股份有限公司', no:'CG-2026-0627', type:'采购合同', status:'待人工复核', ver:'v2', updated:'2026-06-27 09:12', owner:'张明（销售）', demo:true, baseVer:'v1', baselineLabel:'v1 销售提交（基准）' },
+  { id:'c2', name:'服务器采购合同 · 浪潮信息', no:'CG-2026-0613', type:'采购合同', status:'复核完成', ver:'v3', updated:'2026-06-20 16:40', owner:'张明（销售）' },
+  { id:'c3', name:'办公设备采购合同 · 得力', no:'CG-2026-0605', type:'采购合同', status:'待人工复核', ver:'v1', updated:'2026-06-18 10:05', owner:'王磊（销售）' },
+  { id:'c4', name:'云服务采购合同 · 阿里云', no:'CG-2026-0628', type:'采购合同', status:'AI初审中', ver:'v1', updated:'2026-06-28 08:30', owner:'王磊（销售）' },
+  { id:'c5', name:'耗材采购合同 · 晨光', no:'CG-2026-0610', type:'采购合同', status:'AI初审中', ver:'v2', updated:'2026-06-19 14:20', owner:'张明（销售）' },
+];
+const STT_CLS = { 'AI初审中':'stt-ai', '待人工复核':'stt-doing', '复核完成':'stt-done' };
+
+/* 全部版本变更记录（按合同 id，含上传/比对/接受/拒绝/批注/退回/定稿）*/
+const CHANGE_TYPE = { upload:'上传', diff:'版本比对', accept:'接受', reject:'拒绝', annotate:'批注', apply:'一键应用', return:'退回', finalize:'定稿' };
+const contractChangeLogs = {
+  c1: [
+    { ver:'v2', time:'2026-06-27 09:18', user:'李颖莹', post:'法务', type:'accept', clause:'第四条 1 付款账期', detail:'接受修改：账期 30→60 天，总价 10→12 万' },
+    { ver:'v2', time:'2026-06-27 09:12', user:'系统/AI', post:'-', type:'diff', clause:'—', detail:'相对 v1 检测到 4 处变更：付款账期、违约金比例、预付款删除、新增条款' },
+    { ver:'v2', time:'2026-06-27 09:11', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传对方修改版，关联为本合同 v2' },
+    { ver:'v1', time:'2026-06-25 14:00', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传初始版本（销售提交，作为比对基准）' },
+  ],
+  c2: [
+    { ver:'v3', time:'2026-06-20 16:40', user:'李颖莹', post:'法务', type:'finalize', clause:'—', detail:'复审通过，各方确认，锁定归档' },
+    { ver:'v3', time:'2026-06-20 15:30', user:'李颖莹', post:'法务', type:'accept', clause:'第六条 2 质保期', detail:'接受修改：质保期由 1 年调整为 2 年' },
+    { ver:'v3', time:'2026-06-20 11:00', user:'系统/AI', post:'-', type:'diff', clause:'—', detail:'相对 v2 检测到 1 处变更：质保期' },
+    { ver:'v3', time:'2026-06-20 10:50', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传对方确认版 v3' },
+    { ver:'v2', time:'2026-06-15 09:20', user:'李颖莹', post:'法务', type:'annotate', clause:'第三条 1 交货期', detail:'批注：交货期 20 日偏紧，建议与对方协商' },
+    { ver:'v2', time:'2026-06-14 16:00', user:'系统/AI', post:'-', type:'diff', clause:'—', detail:'相对 v1 检测到 2 处变更：交货期、付款方式' },
+    { ver:'v2', time:'2026-06-14 15:45', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传对方修改版 v2' },
+    { ver:'v1', time:'2026-06-10 10:00', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传初始版本' },
+  ],
+  c3: [
+    { ver:'v1', time:'2026-06-18 10:05', user:'王磊', post:'销售', type:'upload', clause:'—', detail:'上传初始版本，等待 AI 初审' },
+  ],
+  c4: [
+    { ver:'v1', time:'2026-06-28 08:30', user:'王磊', post:'销售', type:'upload', clause:'—', detail:'上传初始版本，AI 初审排队中' },
+  ],
+  c5: [
+    { ver:'v2', time:'2026-06-19 14:20', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传修改版 v2（对方退回后修订）' },
+    { ver:'v2', time:'2026-06-19 14:05', user:'李颖莹', post:'法务', type:'return', clause:'—', detail:'退回销售：第五条违约金比例过低，需与对方重新协商' },
+    { ver:'v1', time:'2026-06-17 11:00', user:'张明', post:'销售', type:'upload', clause:'—', detail:'上传初始版本' },
+  ],
+};
+
+/* ============ 关键字段摘要（按立场给不同 tag 语义）============ */
+const fields = [
+  { name:'合同总价', from:'100,000', to:'120,000' },
+  { name:'付款账期', from:'30天', to:'60天' },
+  { name:'违约金比例', from:'3‰', to:'2‰' },
+  { name:'交货期', from:'15日', to:'20日' },
+];
+// 每个字段在不同立场下的风险标签
+const fieldTag = {
+  '合同总价':{ buyer:['需核价','tag-high'], seller:['对方上调','tag-mid'], neutral:['金额变动','tag-mid'] },
+  '付款账期':{ buyer:['利于我方','tag-low'], seller:['账期延长·不利','tag-high'], neutral:['账期放宽','tag-mid'] },
+  '违约金比例':{ buyer:['约束减弱·不利','tag-high'], seller:['利于我方','tag-low'], neutral:['约束减弱','tag-mid'] },
+  '交货期':{ buyer:['交期放宽·留意','tag-mid'], seller:['利于我方','tag-low'], neutral:['交期放宽','tag-mid'] },
+};
+
+/* ============ 条款 + 立场化 AI 解读 ============ */
+const clauses = [
+  {
+    id:'4-1', code:'四、1', title:'第四条 1　付款账期', flag:'mod', risk:'high',
+    old:'货物收到验收合格，并收到乙方提供的等额增值税发票后 <del class="d">30</del> 天内，甲方支付总货款总计人民币 <del class="d">100,000</del> 元。',
+    neo:'货物收到验收合格，并收到乙方提供的等额增值税发票后 <ins class="i">60</ins> 天内，甲方支付总货款总计人民币 <ins class="i">120,000</ins> 元。',
+    ai:{
+      buyer:'账期由 30 天延长至 <b>60 天</b>，占用我方付款义务时间更长、对采购方现金流<b>更有利</b>；但合同总价上调 2 万元，<b>建议核对是否与货物清单单价变动一致</b>。',
+      seller:'账期由 30 天延长至 <b>60 天</b>，意味着我方（供方）回款变慢、<b>资金压力增大</b>，建议争取缩短账期或增加预付款；总价上调对我方有利。',
+      neutral:'账期 30→60 天、总价 +2 万元两项变更并存，<b>建议双方就回款节奏与价格变动一并确认</b>，保持对价平衡。'
+    },
+    suggestion:{
+      buyer:'建议维持账期不超过 30 天，或要求总价随账期延长作相应下调；核对清单单价与总价变动是否一致。',
+      seller:'建议争取预付款或缩短账期至 45 天以内，弥补回款周期拉长带来的资金成本。',
+      neutral:'建议将账期延长与总价上调作为对价一并书面确认，避免单项变更引发争议。'
+    },
+    legalBasis:[{ law:'民法典', no:'第634条', id:'civ-634', point:'分期付款买受人未付到期价款达五分之一，出卖人可请求支付全部价款或解除合同' }]
+  },
+  {
+    id:'3-2', code:'三、2', title:'第三条 2　预付款比例', flag:'del', risk:'high',
+    old:'合同签订后三日内，甲方应向乙方支付合同总额 <del class="d">30%</del> 的预付款，作为乙方备货及排产之用。',
+    neo:'',
+    ai:{
+      buyer:'对方<strong>删除预付款条款</strong>，我方（采购方）无需提前支付，<b>利于我方现金流</b>；但需关注供方是否因此抬高单价或拖延排产。',
+      seller:'预付款条款被删除，<b>我方（供方）失去开工资金保障</b>，存在对方违约拒付风险，建议争取恢复预付款或提高违约金。',
+      neutral:'预付款删除改变资金安排，<b>建议双方确认价格、交期是否已作相应调整</b>，避免单方承担资金压力。'
+    },
+    suggestion:{
+      buyer:'可接受删除，但建议在其它条款中明确交货期与验收标准，防止供方拖延。',
+      seller:'建议恢复预付款条款，比例不低于 30%；或改为分阶段付款并绑定里程碑验收。',
+      neutral:'建议书面确认删除预付款后的对价安排，并保留因对方原因导致无法排产时的解除权。'
+    },
+    legalBasis:[{ law:'民法典', no:'第526条', id:'civ-526', point:'当事人互负债务，有先后履行顺序的，先履行一方未履行的，后履行一方有权拒绝其履行要求' }]
+  },
+  {
+    id:'5-1', code:'五、1', title:'第五条 1　违约金比例', flag:'mod', risk:'mid',
+    old:'乙方逾期交货的，自逾期之日起30日（含30日）内，每日按逾期交货金额的 <del class="d">3‰</del> 向甲方支付违约金。',
+    neo:'乙方逾期交货的，自逾期之日起30日（含30日）内，每日按逾期交货金额的 <ins class="i">2‰</ins> 向甲方支付违约金。',
+    ai:{
+      buyer:'逾期违约金由 3‰ 下调至 <b>2‰</b>，对供方约束<b>减弱</b>、对我方采购方<b>略不利</b>。',
+      seller:'逾期违约金由 3‰ 降至 <b>2‰</b>，<b>降低了我方逾期风险敞口</b>，对供方有利；可接受。',
+      neutral:'违约金 3‰→2‰ 属责任条款弱化，<b>建议结合交货周期合理性评估比例是否公允</b>。'
+    },
+    suggestion:{
+      buyer:'建议恢复至 3‰ 或不低于公司采购合同违约金下限；可约定上限不超过合同总额 30%。',
+      seller:'可接受 2‰，但建议同步争取交货期宽限或排除不可抗力以外的免责情形。',
+      neutral:'建议违约金比例与交货周期、行业惯例相匹配，并明确计算基数与上限。'
+    },
+    legalBasis:[{ law:'民法典', no:'第585条', id:'civ-585', point:'约定的违约金过分高于造成的损失的，人民法院或者仲裁机构可以适当减少' }]
+  },
+  {
+    id:'5-2', code:'五、2', title:'第五条 2　新增条款', flag:'add', risk:'mid',
+    addedFull:'<ins class="i">乙方需提供原厂授权书，否则甲方有权拒收并要求乙方承担由此产生的全部费用。</ins>',
+    ai:{
+      buyer:'新增<b>原厂授权义务</b>，强化对供方资质约束、<b>利于我方</b>。',
+      seller:'新增原厂授权与拒收条款，<b>加重我方义务与风险</b>。',
+      neutral:'新增原厂授权条款合理，<b>建议把"全部费用"细化为合理且直接的费用</b>，平衡双方。'
+    },
+    suggestion:{
+      buyer:'建议保留该条款，并将"全部费用"限定为直接损失与合理维权费用。',
+      seller:'建议删除"全部费用"表述，改为"直接损失"；或限定拒收条件与补救期限。',
+      neutral:'建议明确授权书提供时限、拒收前置通知程序及费用承担范围。'
+    },
+    legalBasis:[]  // 商业条款，未命中库内法条则不强行引用（F6 防幻觉）
+  },
+];
+
+/* ============ 全文预览 mock（F1）============ */
+const docOutline = [
+  { key:'header', static:true, html:`<p class="doc-title">采购合同</p><p class="doc-meta">合同编号：CG-2026-0627<br>甲方（采购方）：每日互动股份有限公司<br>乙方（供应方）：示例供应商有限公司<br>签订地点：浙江省杭州市</p>` },
+  { key:'s1', title:'第一条　合同标的', static:true, text:'乙方向甲方供应合同附件《货物清单》所列货物，具体规格、型号、数量以清单为准。' },
+  { key:'s2', title:'第二条　合同总价', static:true, text:'本合同总价为人民币 120,000 元（大写：壹拾贰万元整），含增值税、包装、运输及卸货费用。', changed:true, risk:'mid' },
+  { key:'s3-1', title:'第三条 1　交货期', static:true, text:'乙方应于本合同生效后 20 日内将货物运送至甲方指定交货地点，并承担运输风险直至验收合格。', changed:true, risk:'mid' },
+  { key:'3-2', clauseId:'3-2' },
+  { key:'4-1', clauseId:'4-1' },
+  { key:'5-1', clauseId:'5-1' },
+  { key:'5-2', clauseId:'5-2' },
+  { key:'s6', title:'第六条　验收标准', static:true, text:'货物到达后，甲方应在 5 个工作日内组织验收；验收标准以国家标准及合同附件技术规格为准。' },
+  { key:'s7', title:'第七条　保密义务', static:true, text:'双方对因本合同知悉的商业秘密及个人信息负有保密义务，未经对方书面同意不得向第三方披露。' },
+];
+
+function clausePreviewContent(c){
+  if(c.flag==='add') return c.addedFull || '';
+  if(c.flag==='del'){
+    if(c.neo) return `<p>${c.neo}</p>`;
+    return `<p class="doc-old">${c.old.replace(/<\/?del[^>]*>/g,'').replace(/<\/?ins[^>]*>/g,'')}</p><p class="doc-del-note">（当前 v2 版本中已删除此条款）</p>`;
+  }
+  return c.neo || c.old;
+}
+function docBlockClass(c){
+  let cls = 'doc-block doc-changed';
+  if(c.flag==='add') cls += ' doc-add';
+  if(c.flag==='del') cls += ' doc-deleted';
+  if(c.risk==='high') cls += ' risk-high';
+  else if(c.risk==='mid') cls += ' risk-mid';
+  if(state.docHighlightId===c.id) cls += ' doc-active';
+  return cls;
+}
+function renderDocPreview(){
+  const ctt = contractList.find(x=>x.id===state.currentContractId);
+  document.getElementById('docPreviewVer').textContent = (ctt?.ver || 'v2')+' · 当前版本';
+  const html = docOutline.map(item=>{
+    if(item.static){
+      let cls = 'doc-block';
+      if(item.changed){
+        cls += ' doc-changed';
+        if(item.risk==='high') cls += ' risk-high';
+        else if(item.risk==='mid') cls += ' risk-mid';
+      }
+      if(item.key==='header') return `<div class="${cls}">${item.html}</div>`;
+      return `<div class="${cls}"><h4>${item.title}</h4><p>${item.text}</p></div>`;
+    }
+    const c = clauses.find(x=>x.id===item.clauseId);
+    if(!c) return '';
+    return `<div class="${docBlockClass(c)}" id="doc-block-${c.id}"><h4>${c.title}</h4><div>${clausePreviewContent(c)}</div></div>`;
+  }).join('');
+  document.getElementById('docPreviewBody').innerHTML = html;
+}
+function highlightDocSection(clauseId){
+  state.docHighlightId = clauseId;
+  renderDocPreview();
+  requestAnimationFrame(()=>{
+    const block = document.getElementById('doc-block-'+clauseId);
+    const body = document.getElementById('docPreviewBody');
+    if(block && body) body.scrollTo({ top: Math.max(0, block.offsetTop - 12), behavior:'smooth' });
+  });
+}
+
+/* ============ 卡片审阅状态 ============ */
+const reviewState = {}; // id -> {decision, note, applied, originalNeo}
+clauses.forEach(c=>reviewState[c.id]={decision:null,note:'',applied:false,originalNeo:null});
+function resetReviewState(){
+  Object.keys(reviewState).forEach(id=>{
+    reviewState[id] = { decision:null, note:'', applied:false, originalNeo:null };
+  });
+  state.reviewDirty = false;
+}
+
+function isDemoContract(c){ return !!(c && c.demo); }
+function getActiveClauses(){ return isDemoContract(contractList.find(x=>x.id===state.currentContractId)) ? clauses : []; }
+function chlogNow(){
+  return new Date().toLocaleString('zh-CN',{hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g,'-');
+}
+function appendChangeLog(cid, entry){
+  if(!contractChangeLogs[cid]) contractChangeLogs[cid] = [];
+  contractChangeLogs[cid].unshift(entry);
+}
+function nextVer(ver){
+  const n = parseInt(String(ver).replace(/\D/g,''), 10) || 1;
+  return 'v'+(n+1);
+}
+
+/* ============ 登录 ============ */
+function doLogin(){
+  const u = document.getElementById('loginUser').value.trim() || 'user';
+  state.user = u;
+  document.getElementById('loginView').classList.add('hidden');
+  // 读取记住的岗位
+  const remembered = localStorage.getItem('mh_post');
+  if(remembered){
+    state.post = remembered;
+    enterApp();
+  } else {
+    openRoleModal();
+  }
+}
+function logout(){
+  document.getElementById('appView').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+  resetUpload();
+}
+
+/* ============ 岗位选择 ============ */
+let pendingPost = '法务';
+function openRoleModal(){
+  pendingPost = state.post || '法务';        // 预选当前岗位
+  updateRoleCards();
+  document.getElementById('rememberChk').checked = !!localStorage.getItem('mh_post');
+  document.getElementById('roleModal').classList.remove('hidden');
+}
+function pickPost(p){ pendingPost = p; updateRoleCards(); }
+function updateRoleCards(){
+  document.querySelectorAll('#roleGrid .role-card').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.post===pendingPost);
+  });
+}
+function confirmPost(){
+  const inApp = !document.getElementById('appView').classList.contains('hidden');
+  state.post = pendingPost;
+  if(document.getElementById('rememberChk').checked){
+    localStorage.setItem('mh_post', pendingPost);
+  } else {
+    localStorage.removeItem('mh_post');   // 取消记住 → 下次登录会再问
+  }
+  document.getElementById('roleModal').classList.add('hidden');
+  if(inApp){
+    // 应用内切换岗位：刷新岗位显示与定位，不回到登录/列表
+    syncPost();
+    if(state.contractLoaded){ renderAll(); locateForPost(); }
+    toast('已切换岗位：'+pendingPost);
+  } else {
+    enterApp();
+  }
+}
+
+function enterApp(){
+  document.getElementById('appView').classList.remove('hidden');
+  syncPost();
+  syncStanceSeg();
+  goList();
+}
+const USER_NAMES = { liyingying:'李颖莹', zhangming:'张明', wanglei:'王磊', sunqi:'孙琪', admin:'管理员' };
+function syncPost(){
+  document.getElementById('suPost').textContent = '岗位：'+state.post;
+  const nm = USER_NAMES[state.user] || state.user || '李颖莹';
+  document.getElementById('suName').textContent = nm;
+  document.getElementById('suAvatar').textContent = nm.charAt(0);
+}
+function toggleUserMenu(e){ e.stopPropagation(); document.getElementById('suMenu').classList.toggle('hidden'); }
+function closeUserMenu(){ document.getElementById('suMenu').classList.add('hidden'); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#sideUser')) closeUserMenu();
+  if(!e.target.closest('#statusFilter')) closeStatusMenu();
+  if(!e.target.closest('#exportGroup') && !e.target.closest('.row-menu')) closeExportMenus();
+});
+
+/* ============ 视图路由：列表 / 上传 / 工作台 ============ */
+function isWorkbenchActive(){
+  return !document.getElementById('workbench').classList.contains('hidden');
+}
+function showView(v){
+  document.getElementById('listView').classList.toggle('hidden', v!=='list');
+  document.getElementById('uploadStage').classList.toggle('hidden', v!=='upload');
+  document.getElementById('docbar').classList.toggle('hidden', v!=='work');
+  document.getElementById('statusSteps').classList.toggle('hidden', v!=='work');
+  document.getElementById('workbench').classList.toggle('hidden', v!=='work');
+  document.getElementById('auditView').classList.toggle('hidden', v!=='audit');
+  document.getElementById('userView').classList.toggle('hidden', v!=='users');
+  document.getElementById('knowledgeView').classList.toggle('hidden', v!=='knowledge');
+  document.getElementById('systemView').classList.toggle('hidden', v!=='system');
+  document.getElementById('myFocusView').classList.toggle('hidden', v!=='myfocus');
+  // 顶栏“← 合同库”返回按钮：在上传/工作台显示
+  document.getElementById('navBack').classList.toggle('hidden', !(v==='upload'||v==='work'));
+  // 立场（甲/乙/中立）只在打开具体合同的工作台显示
+  document.getElementById('stanceSwitch').classList.toggle('hidden', v!=='work');
+  const menuMap={audit:'audit',users:'user',system:'system',myfocus:''};
+  setMenuActive(v in menuMap ? menuMap[v] : 'list');
+}
+
+/* ============ 左侧模块菜单 ============ */
+function setMenuActive(m){
+  document.querySelectorAll('#sideMenu .menu-item').forEach(el=>el.classList.toggle('active', el.dataset.menu===m));
+}
+function menuGo(m){
+  if(m==='list'){ goList(); return; }
+  if(m==='audit'){ goAudit(); return; }
+  if(m==='user'){ goUsers(); return; }
+  if(m==='legal'){ goKB('legal'); return; }
+  if(m==='rule'){ goKB('rule'); return; }
+  if(m==='system'){ goSystem(); return; }
+}
+
+/* ============ 审计日志 ============ */
+const auditLogs = [
+  { time:'2026-06-27 09:18:42', user:'李颖莹', post:'法务', action:'接受修改', obj:'采购合同·每日互动 / 第四条1 付款账期', ip:'10.0.0.34' },
+  { time:'2026-06-27 09:16:05', user:'李颖莹', post:'法务', action:'查看合同', obj:'采购合同·每日互动 v2', ip:'10.0.0.34' },
+  { time:'2026-06-27 09:12:11', user:'系统/AI', post:'-', action:'初审完成', obj:'采购合同·每日互动 v2（立场：甲方）', ip:'-' },
+  { time:'2026-06-27 09:11:50', user:'张明', post:'销售', action:'上传合同', obj:'采购合同·每日互动 v2', ip:'10.0.0.51' },
+  { time:'2026-06-27 09:05:30', user:'李颖莹', post:'法务', action:'登录', obj:'-', ip:'10.0.0.34' },
+  { time:'2026-06-26 18:20:09', user:'admin', post:'管理员', action:'修改模型配置', obj:'默认模型→本地 DeepSeek', ip:'10.0.0.10' },
+  { time:'2026-06-26 17:02:33', user:'王磊', post:'销售', action:'导出变更报告', obj:'办公设备采购合同·得力 v1', ip:'10.0.0.52' },
+];
+function goAudit(){ showView('audit'); renderAudit(); }
+function renderAudit(){
+  const kw=(document.getElementById('auditSearch').value||'').trim();
+  const rows=auditLogs.filter(a=>!kw || a.user.includes(kw) || a.action.includes(kw) || a.obj.includes(kw));
+  document.getElementById('auditBody').innerHTML = rows.length
+    ? rows.map(a=>`<tr><td class="no">${a.time}</td><td>${a.user}</td><td>${a.post}</td><td>${a.action}</td><td>${a.obj}</td><td class="no">${a.ip}</td></tr>`).join('')
+    : `<tr><td colspan="6" class="empty">无匹配记录</td></tr>`;
+}
+
+/* ============ 用户管理（F16 账号分配制）============ */
+const users = [
+  { name:'admin',     full:'系统管理员', post:'-',  role:'管理员',   enabled:true,  created:'2026-06-20 10:00' },
+  { name:'liyingying',full:'李颖莹',     post:'法务', role:'普通用户', enabled:true,  created:'2026-06-22 14:30' },
+  { name:'zhangming', full:'张明',       post:'销售', role:'普通用户', enabled:true,  created:'2026-06-22 14:32' },
+  { name:'wanglei',   full:'王磊',       post:'销售', role:'普通用户', enabled:true,  created:'2026-06-23 09:10' },
+  { name:'sunqi',     full:'孙琪',       post:'财务', role:'普通用户', enabled:false, created:'2026-06-24 16:05' },
+];
+function goUsers(){ showView('users'); renderUsers(); }
+function renderUsers(){
+  const kw=(document.getElementById('userSearch').value||'').trim();
+  const rows=users.filter(u=>!kw || u.name.includes(kw) || u.full.includes(kw));
+  document.getElementById('userBody').innerHTML = rows.length
+    ? rows.map(u=>{
+        const i=users.indexOf(u);
+        const st=u.enabled?'<span class="st st-on">启用</span>':'<span class="st st-off">停用</span>';
+        const roleTag=u.role==='管理员'?'<b style="color:var(--gold)">管理员</b>':(u.role==='维护者'?'维护者':'普通用户');
+        return `<tr><td class="no">${u.name}</td><td>${u.full}</td><td>${u.post}</td><td>${roleTag}</td><td>${st}</td><td class="no">${u.created}</td>`+
+          `<td><span class="rowact" onclick="toggleUser(${i})">${u.enabled?'停用':'启用'}</span> · <span class="rowact" onclick="resetPwd(${i})">重置密码</span></td></tr>`;
+      }).join('')
+    : `<tr><td colspan="7" class="empty">无匹配用户</td></tr>`;
+}
+function toggleUser(i){ users[i].enabled=!users[i].enabled; renderUsers(); toast((users[i].enabled?'已启用 ':'已停用 ')+users[i].full); }
+function resetPwd(i){ toast('已为「'+users[i].full+'」重置密码为初始密码（演示）'); }
+function openUserModal(){ document.getElementById('userModal').classList.remove('hidden'); }
+function closeUserModal(){ document.getElementById('userModal').classList.add('hidden'); }
+function addUser(){
+  const name=document.getElementById('nuName').value.trim();
+  const full=document.getElementById('nuFull').value.trim();
+  if(!name||!full){ toast('请填写用户名与姓名'); return; }
+  if(users.some(u=>u.name===name)){ toast('用户名已存在'); return; }
+  users.unshift({ name, full, post:document.getElementById('nuPost').value, role:document.getElementById('nuRole').value, enabled:true, created:new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-') });
+  document.getElementById('nuName').value=''; document.getElementById('nuFull').value='';
+  closeUserModal(); renderUsers(); toast('已开通账号：'+full);
+}
+
+/* ============ 法律库（F7，静态导入·只读）============ */
+const legalArticles = [
+  { id:'civ-465', law:'民法典', no:'第465条', content:'依法成立的合同，受法律保护。依法成立的合同，仅对当事人具有法律约束力，但是法律另有规定的除外。', tags:['合同效力'] },
+  { id:'civ-509', law:'民法典', no:'第509条', content:'当事人应当按照约定全面履行自己的义务。当事人应当遵循诚信原则，根据合同的性质、目的和交易习惯履行通知、协助、保密等义务。', tags:['履行','交付'] },
+  { id:'civ-526', law:'民法典', no:'第526条', content:'当事人互负债务，有先后履行顺序的，应当同时履行。一方在对方履行之前有权拒绝其相应的履行请求。', tags:['付款','预付款','履行顺序'] },
+  { id:'civ-577', law:'民法典', no:'第577条', content:'当事人一方不履行合同义务或者履行合同义务不符合约定的，应当承担继续履行、采取补救措施或者赔偿损失等违约责任。', tags:['违约责任'] },
+  { id:'civ-585', law:'民法典', no:'第585条', content:'当事人可以约定一方违约时应当根据违约情况向对方支付一定数额的违约金……约定的违约金过分高于造成的损失的，人民法院或者仲裁机构可以适当减少。', tags:['违约金','赔偿'] },
+  { id:'civ-634', law:'民法典', no:'第634条', content:'分期付款的买受人未支付到期价款的数额达到全部价款的五分之一……出卖人可以请求支付全部价款或者解除合同。', tags:['付款账期','买卖'] },
+  { id:'civ-807', law:'民法典', no:'第807条', content:'发包人未按照约定支付价款的，承包人可以催告发包人在合理期限内支付价款。', tags:['付款','采购'] },
+  { id:'dsl-27', law:'数据安全法', no:'第27条', content:'开展数据处理活动应当依照法律、法规的规定，建立健全全流程数据安全管理制度，组织开展数据安全教育培训，采取相应的技术措施和其他必要措施保障数据安全。', tags:['数据安全','保密'] },
+  { id:'dsl-31', law:'数据安全法', no:'第31条', content:'关键信息基础设施的运营者在中华人民共和国境内运营中收集和产生的重要数据的出境安全管理，适用相关规定。', tags:['数据出境'] },
+  { id:'pipl-13', law:'个人信息保护法', no:'第13条', content:'符合下列情形之一的，个人信息处理者方可处理个人信息：取得个人同意；为订立、履行合同所必需……', tags:['个人信息','合规'] },
+  { id:'pipl-38', law:'个人信息保护法', no:'第38条', content:'个人信息处理者因业务等需要，确需向中华人民共和国境外提供个人信息的，应当具备相应条件。', tags:['个人信息','数据出境'] },
+];
+/* 知识库（法律法规 / 审查规则，由侧栏两个子菜单切换）*/
+function goKB(tab){ showView('knowledge'); renderLegal(); renderRule(); kbShow(tab); }
+function kbShow(tab){
+  document.querySelectorAll('#knowledgeView .kb-pane').forEach(el=>el.classList.toggle('hidden', el.dataset.kb!==tab));
+  document.getElementById('kbTitle').textContent = tab==='legal' ? '法律法规' : '审查规则';
+  document.getElementById('kbSub').textContent = tab==='legal'
+    ? `AI 审查所依据的法律法规（静态导入，暂只读、不支持录入）　·　共 ${legalArticles.length} 条`
+    : `确定性审查规则，与模型互补做防遗漏校验（暂只读、不支持录入）　·　共 ${rules.length} 条`;
+  setMenuActive(tab);
+}
+function renderLegal(){
+  const kw=(document.getElementById('legalSearch').value||'').trim();
+  const law=document.getElementById('legalLaw').value;
+  const rows=legalArticles.filter(a=>(!law||a.law===law) && (!kw || a.law.includes(kw) || a.no.includes(kw) || a.content.includes(kw) || a.tags.join('').includes(kw)));
+  document.getElementById('legalBody').innerHTML = rows.length
+    ? rows.map(a=>`<tr id="legal-row-${a.id}" class="${a.id===state.legalHighlightId?'legal-row-highlight':''}"><td><b style="color:var(--navy)">${a.law}</b></td><td class="no">${a.no}</td><td style="line-height:1.7;">${a.content}</td><td>${a.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty">无匹配条文</td></tr>`;
+}
+function findLegalId(law, no){
+  const a = legalArticles.find(x=>x.law===law && x.no===no);
+  return a ? a.id : null;
+}
+function openLegalRef(refId, law, no){
+  const id = refId || findLegalId(law, no);
+  state.legalHighlightId = id;
+  goKB('legal');
+  document.getElementById('legalLaw').value = law || '';
+  document.getElementById('legalSearch').value = (no||'').replace(/^第/,'').replace(/条$/,'');
+  renderLegal();
+  setTimeout(()=>{
+    const row = id ? document.getElementById('legal-row-'+id) : null;
+    if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
+    else document.getElementById('knowledgeView').scrollIntoView({behavior:'smooth',block:'start'});
+  }, 120);
+  toast('已跳转至知识库：'+law+' '+no);
+  setTimeout(()=>{ state.legalHighlightId=null; }, 8000);
+}
+
+/* ============ 规则库（F8/F9，只读）============ */
+const rules = [
+  { name:'付款账期上限', type:'采购', cond:'付款账期 > 60 天', level:'高', sug:'账期过长占用资金，建议压缩至 30–60 天或增加预付款。' },
+  { name:'违约金比例过高/过低', type:'采购', cond:'违约金比例 > 30% 或 < 0.5%', level:'中', sug:'过高可能被司法酌减、过低难以约束，建议设在合理区间（如日万分之五、上限合同额30%）。' },
+  { name:'缺少质保期条款', type:'采购', cond:'未检测到“质保/质量保证期”', level:'中', sug:'补充质保期与质保金返还条件，明确缺陷责任。' },
+  { name:'验收标准不明确', type:'采购', cond:'验收条款缺少标准/期限', level:'中', sug:'明确验收标准、验收期限及逾期未验收视为合格的规则。' },
+  { name:'单方解除权失衡', type:'通用', cond:'仅对方享有任意解除权', level:'高', sug:'争取对等解除权或限定解除条件，避免己方被动。' },
+  { name:'知识产权归属缺失', type:'采购', cond:'定制开发未约定IP归属', level:'高', sug:'明确成果知识产权归属与授权范围。' },
+  { name:'保密条款缺失', type:'通用', cond:'未检测到保密义务条款', level:'中', sug:'补充保密范围、期限及违约责任（呼应数据安全法）。' },
+  { name:'争议解决方式缺失', type:'通用', cond:'未约定管辖法院/仲裁', level:'低', sug:'明确争议解决方式与管辖地，建议选择对己方便利的管辖。' },
+];
+function renderRule(){
+  const kw=(document.getElementById('ruleSearch').value||'').trim();
+  const lv=document.getElementById('ruleLevel').value;
+  const rows=rules.filter(r=>(!lv||r.level===lv) && (!kw || r.name.includes(kw) || r.cond.includes(kw) || r.sug.includes(kw)));
+  const lvTag=l=>`<span class="st ${l==='高'?'st-off':(l==='中'?'st-mid':'st-on')}">${l}风险</span>`;
+  document.getElementById('ruleBody').innerHTML = rows.length
+    ? rows.map(r=>`<tr><td class="col-name"><b style="color:var(--navy)">${r.name}</b></td><td class="col-type">${r.type}</td><td class="col-cond no" style="line-height:1.7;">${r.cond}</td><td class="col-risk">${lvTag(r.level)}</td><td class="col-sug" style="line-height:1.7;">${r.sug}</td></tr>`).join('')
+    : `<tr><td colspan="5" class="empty">无匹配规则</td></tr>`;
+}
+function goList(force){
+  // 仅在实际离开「合同工作台」时询问是否复核完成；侧边栏切到审计/知识库后再点「全部合同」不应重复弹窗
+  if(!force && isWorkbenchActive() && state.contractLoaded && state.currentContractId){
+    const c = contractList.find(x=>x.id===state.currentContractId);
+    if(c && c.status==='待人工复核' && hasReviewChanges()){
+      promptReviewDone('leave', completed=>{
+        if(completed) setVersionStatus('复核完成');
+        goList(true);
+      });
+      return;
+    }
+  }
+  state.reviewDirty = false;
+  showView('list');
+  renderList();
+}
+function goUpload(){
+  showView('upload');
+  document.getElementById('unsupportBox').classList.add('hidden');
+  refreshUploadTargets();
+  setUploadMode(document.querySelector('input[name="uploadMode"]:checked')?.value || 'new');
+}
+
+function getSelectedStatuses(){
+  return [...document.querySelectorAll('#statusFilterMenu input:checked')].map(el=>el.value);
+}
+function toggleStatusMenu(e){ e.stopPropagation(); document.getElementById('statusFilterMenu').classList.toggle('hidden'); }
+function closeStatusMenu(){ document.getElementById('statusFilterMenu').classList.add('hidden'); }
+function onStatusFilterChange(){
+  const sel = getSelectedStatuses();
+  document.getElementById('statusFilterLabel').textContent =
+    sel.length === 0 || sel.length === STATUS_OPTS.length ? '全部状态' : sel.join('、');
+  renderList();
+}
+
+function renderList(){
+  const kw = (document.getElementById('listSearch').value||'').trim();
+  const statuses = getSelectedStatuses();
+  const rows = contractList.filter(c=>
+    (!kw || c.name.includes(kw) || c.no.includes(kw)) && (statuses.length === 0 || statuses.includes(c.status)));
+  document.getElementById('listCount').textContent = contractList.length;
+  const body = document.getElementById('listBody');
+  if(rows.length===0){ body.innerHTML = `<tr><td colspan="8" class="empty">没有符合条件的合同</td></tr>`; return; }
+  body.innerHTML = rows.map(c=>`<tr onclick="openContract('${c.id}')">
+    <td class="cname">${c.name}</td>
+    <td class="no">${c.no}</td>
+    <td>${c.type}</td>
+    <td><span class="stt ${STT_CLS[c.status]}">${c.status}</span></td>
+    <td class="no">${c.ver}</td>
+    <td class="no">${c.updated}</td>
+    <td>${c.owner}</td>
+    <td class="col-actions" onclick="event.stopPropagation()">
+      <div class="row-menu">
+        <button type="button" class="row-menu-btn" onclick="toggleRowMenu(event,'${c.id}')">操作 ▾</button>
+        <div class="export-menu hidden" id="rowMenu-${c.id}">
+          <div class="export-mi" onclick="openChangeLog('${c.id}', event)">变更记录</div>
+          <div class="export-mi has-sub">
+            <span>导出</span><span class="sub-arr">›</span>
+            <div class="export-sub">
+              <div class="export-mi" onclick="exportContract('docx','${c.id}')">Word <small>(.docx)</small></div>
+              <div class="export-mi" onclick="exportContract('pdf','${c.id}')">PDF <small>(.pdf)</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+/* ============ 合同导出（Word / PDF）============ */
+const EXPORT_LABEL = { docx:'Word (.docx)', pdf:'PDF (.pdf)', report:'变更报告' };
+function closeExportMenus(){ document.querySelectorAll('.export-menu').forEach(el=>el.classList.add('hidden')); }
+function toggleExportMenu(e){ e.stopPropagation(); closeExportMenus(); document.getElementById('exportMenu').classList.toggle('hidden'); }
+function toggleRowMenu(e, id){ e.stopPropagation(); closeExportMenus(); document.getElementById('rowMenu-'+id).classList.toggle('hidden'); }
+function exportContract(fmt, id){
+  const cid = id || state.currentContractId;
+  const c = contractList.find(x=>x.id===cid);
+  if(!c){ toast('未找到合同'); return; }
+  closeExportMenus();
+  const label = EXPORT_LABEL[fmt] || fmt;
+  const ext = { docx:'docx', pdf:'pdf', report:'pdf' }[fmt] || 'bin';
+  const doExport = ()=>{
+    toast(`正在导出「${c.name}」${c.ver} · ${label}…`);
+    setTimeout(()=>toast(`已导出：${c.no}_${c.ver}.${ext}（演示）`), 800);
+  };
+  if(c.status==='待人工复核'){
+    promptReviewDone('export', completed=>{
+      if(completed) setVersionStatus('复核完成', cid);
+      doExport();
+    });
+  } else {
+    doExport();
+  }
+}
+
+/* ============ 版本状态 & 复核完成确认 ============ */
+let reviewDoneCallback = null;
+function hasReviewChanges(){
+  return Object.values(reviewState).some(r=>r.decision || r.note || r.applied);
+}
+function setVersionStatus(status, cid){
+  const c = contractList.find(x=>x.id===(cid||state.currentContractId));
+  if(!c) return;
+  c.status = status;
+  state.currentStatus = status;
+  if(state.currentContractId===c.id && !document.getElementById('workbench').classList.contains('hidden')){
+    document.getElementById('docMeta').innerHTML = buildDocMeta(c);
+    renderStatusSteps();
+  }
+  renderList();
+}
+function buildDocMeta(c){
+  const base = c.baselineLabel || ('销售提交 '+ (c.baseVer || 'v1'));
+  return `<span class="meta-item"><span class="meta-k">编号</span><span class="meta-val">${c.no}</span></span>`
+    + `<span class="meta-item"><span class="meta-k">版本</span><span class="meta-val">${c.ver}</span></span>`
+    + `<span class="meta-item"><span class="meta-k">状态</span><span class="meta-val status">${c.status}</span></span>`
+    + `<span class="meta-item"><span class="meta-k">上传</span><span class="meta-val">${c.owner}</span></span>`
+    + `<span class="meta-item"><span class="meta-k">基准</span><span class="meta-val">${base}</span></span>`;
+}
+function promptReviewDone(context, callback){
+  reviewDoneCallback = callback;
+  document.getElementById('reviewDoneLead').textContent = context==='export'
+    ? '您即将导出当前版本文件。是否已将本版本人工复核完成？完成后状态将变为「复核完成」。'
+    : '检测到本版本有审阅变动（接受/拒绝/批注）。离开前是否标记为「复核完成」？';
+  document.getElementById('reviewDoneModal').classList.remove('hidden');
+}
+function closeReviewDone(completed){
+  document.getElementById('reviewDoneModal').classList.add('hidden');
+  const cb = reviewDoneCallback;
+  reviewDoneCallback = null;
+  if(cb) cb(completed);
+  if(completed) toast('当前版本已标记为「复核完成」');
+}
+
+/* ============ 全部版本变更记录 ============ */
+const CHLOG_PAGE_SIZE = 3;
+let chlogState = { cid:null, expanded:{}, pages:{} };
+
+function renderChlogItem(l){
+  return `<div class="chlog-item">
+    <div class="chlog-time">${l.time}</div>
+    <div class="chlog-body">
+      <span class="chlog-tag ${l.type}">${CHANGE_TYPE[l.type]||l.type}</span>
+      <span class="chlog-user">${l.user}</span>${l.post!=='-'?' · '+l.post:''}
+      <div>${l.detail}</div>
+      ${l.clause&&l.clause!=='—'?`<div class="chlog-clause">${l.clause}</div>`:''}
+    </div>
+  </div>`;
+}
+function renderChlogPager(v, page, total, totalItems){
+  let nums = '';
+  for(let i=1;i<=total;i++){
+    nums += `<button type="button" class="${i===page?'active':''}" onclick="chlogGoPage('${v}',${i})">${i}</button>`;
+  }
+  const from = (page-1)*CHLOG_PAGE_SIZE+1;
+  const to = Math.min(page*CHLOG_PAGE_SIZE, totalItems);
+  return `<div class="chlog-pager">
+    <button type="button" ${page<=1?'disabled':''} onclick="chlogGoPage('${v}',${page-1})">上一页</button>
+    ${nums}
+    <span class="pg-info">${from}–${to} / ${totalItems}</span>
+    <button type="button" ${page>=total?'disabled':''} onclick="chlogGoPage('${v}',${page+1})">下一页</button>
+  </div>`;
+}
+function renderChangeLogBody(){
+  const id = chlogState.cid;
+  const logs = contractChangeLogs[id] || [];
+  const vers = [...new Set(logs.map(l=>l.ver))];
+  document.getElementById('chlogBody').innerHTML = vers.length
+    ? vers.map((v,i)=>{
+        const items = logs.filter(l=>l.ver===v);
+        const open = !!chlogState.expanded[v];
+        const page = chlogState.pages[v] || 1;
+        const totalPages = Math.ceil(items.length / CHLOG_PAGE_SIZE);
+        const safePage = Math.min(page, totalPages) || 1;
+        chlogState.pages[v] = safePage;
+        const start = (safePage-1)*CHLOG_PAGE_SIZE;
+        const pageItems = items.slice(start, start+CHLOG_PAGE_SIZE);
+        return `<div class="chlog-card ${open?'open':''}">
+          <div class="chlog-card-head" onclick="toggleChlogVer('${v}')">
+            <span class="ver">${v} <span class="cnt">（${items.length} 条）</span></span>
+            <span class="caret">▾</span>
+          </div>
+          <div class="chlog-card-body">
+            ${pageItems.map(renderChlogItem).join('')}
+            ${items.length>CHLOG_PAGE_SIZE ? renderChlogPager(v, safePage, totalPages, items.length) : ''}
+          </div>
+        </div>`;
+      }).join('')
+    : `<div class="empty" style="padding:24px 0;text-align:center;color:var(--ink-soft)">暂无变更记录</div>`;
+}
+function toggleChlogVer(v){ chlogState.expanded[v] = !chlogState.expanded[v]; renderChangeLogBody(); }
+function chlogGoPage(v, page){
+  if(page<1) return;
+  chlogState.pages[v] = page;
+  chlogState.expanded[v] = true;
+  renderChangeLogBody();
+}
+function openChangeLog(id, e){
+  if(e) e.stopPropagation();
+  closeExportMenus();
+  const c = contractList.find(x=>x.id===id);
+  if(!c) return;
+  const logs = contractChangeLogs[id] || [];
+  const vers = [...new Set(logs.map(l=>l.ver))];
+  chlogState = { cid:id, expanded:{}, pages:{} };
+  vers.forEach((v,i)=>{ chlogState.expanded[v] = i===0; chlogState.pages[v] = 1; });
+  document.getElementById('chlogTitle').textContent = c.name;
+  document.getElementById('chlogMeta').textContent = `编号 ${c.no}　·　当前 ${c.ver}　·　共 ${vers.length} 个版本　·　${logs.length} 条记录`;
+  renderChangeLogBody();
+  document.getElementById('changeLogModal').classList.remove('hidden');
+}
+function closeChangeLog(){ document.getElementById('changeLogModal').classList.add('hidden'); chlogState = { cid:null, expanded:{}, pages:{} }; }
+
+function openContract(id){
+  const c = contractList.find(x=>x.id===id);
+  if(!c) return;
+  if(state.currentContractId !== id) resetReviewState();
+  state.currentContractId = id;
+  document.getElementById('docTitle').textContent = c.name;
+  document.getElementById('docMeta').innerHTML = buildDocMeta(c);
+  state.contractLoaded = true;
+  state.currentStatus = c.status;
+  showView('work');
+  renderAll();
+  if(isDemoContract(c)) locateForPost();
+}
+
+/* ============ 顶栏立场切换（整篇重算；有留痕后锁定）============ */
+function isStanceLocked(){
+  return state.contractLoaded && hasReviewChanges();
+}
+function syncStanceLock(){
+  const locked = isStanceLocked();
+  const sw = document.getElementById('stanceSwitch');
+  if(sw){
+    sw.classList.toggle('locked', locked);
+    sw.title = locked ? '本版本已有接受/拒绝/批注或已应用修改，切换立场会导致 AI 建议与留痕不一致' : '';
+  }
+  document.querySelectorAll('#stanceSeg button').forEach(b=>{ b.disabled = locked; });
+  const hint = document.getElementById('stanceLockHint');
+  if(hint) hint.classList.toggle('hidden', !locked);
+}
+function syncStanceSeg(){
+  document.querySelectorAll('#stanceSeg button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.role===state.stance);
+  });
+  syncStanceLock();
+}
+function switchStance(r){
+  if(r===state.stance) return;
+  if(isStanceLocked()){
+    toast('本版本已有复审留痕，立场已锁定（避免建议与已应用正文不一致）');
+    return;
+  }
+  state.stance = r;
+  syncStanceSeg();
+  if(state.contractLoaded){
+    // 模拟“整篇按新立场重新初审”
+    const rv = document.getElementById('reviewing');
+    rv.classList.remove('hidden');
+    document.getElementById('reviewingText').textContent =
+      'AI 正在按【'+ROLE_NAME[r]+'】立场重新初审…';
+    document.getElementById('clauseList').style.opacity=.3;
+    setTimeout(()=>{
+      rv.classList.add('hidden');
+      document.getElementById('clauseList').style.opacity=1;
+      renderAll();
+      toast('已切换为【'+ROLE_NAME[r]+'】立场，初审结果已更新');
+    }, 900);
+  } else {
+    toast('当前立场：'+ROLE_NAME[r]);
+  }
+}
+
+/* ============ 上传 + 合同类型识别 ============ */
+let uploadMode = 'new';
+let uploadTargetId = null;
+
+function setUploadMode(mode){
+  uploadMode = mode;
+  document.getElementById('uploadTargetRow').classList.toggle('hidden', mode!=='version');
+  if(mode==='version') refreshUploadTargets();
+}
+function refreshUploadTargets(){
+  const sel = document.getElementById('uploadTarget');
+  sel.innerHTML = contractList.map(c=>`<option value="${c.id}">${c.name}（${c.no} · 当前 ${c.ver}）</option>`).join('');
+  uploadTargetId = sel.value;
+}
+function uploadDemo(kind){
+  document.getElementById('unsupportBox').classList.add('hidden');
+  if(kind==='other'){
+    setTimeout(()=>{ document.getElementById('unsupportBox').classList.remove('hidden'); }, 350);
+    return;
+  }
+  loadPurchase();
+}
+function forcePurchase(){ loadPurchase(); }
+function loadPurchase(){
+  const owner = (USER_NAMES[state.user]||state.user||'李颖莹')+'（'+state.post+'）';
+  let c;
+  if(uploadMode==='version' && uploadTargetId){
+    c = contractList.find(x=>x.id===uploadTargetId);
+    if(!c){ toast('请选择要关联的已有合同'); return; }
+    const prevVer = c.ver;
+    c.ver = nextVer(c.ver);
+    c.status = 'AI初审中';
+    c.updated = chlogNow();
+    c.demo = true;
+    c.baseVer = prevVer;
+    c.baselineLabel = prevVer+'（上一版本 · 比对基准）';
+    appendChangeLog(c.id, {
+      ver:c.ver, time:c.updated, user:USER_NAMES[state.user]||state.user, post:state.post,
+      type:'upload', clause:'—', detail:`上传新版本 ${c.ver}，比对基准为 ${prevVer}`
+    });
+    state.currentContractId = c.id;
+    toast(`已关联为「${c.name}」的新版本 ${c.ver}，基准：${prevVer}`);
+  } else {
+    const seq = contractList.length+1;
+    c = {
+      id:'c_new_'+Date.now(), name:'采购合同（新上传）· 示例供应商', no:'CG-2026-07'+String(seq).padStart(2,'0'),
+      type:'采购合同', status:'AI初审中', ver:'v1', updated:chlogNow(), owner, demo:true,
+      baseVer:null, baselineLabel:'无（首版 · 新合同）'
+    };
+    contractList.unshift(c);
+    appendChangeLog(c.id, {
+      ver:'v1', time:c.updated, user:USER_NAMES[state.user]||state.user, post:state.post,
+      type:'upload', clause:'—', detail:'上传新合同（首版，暂无版本比对基准）'
+    });
+    state.currentContractId = c.id;
+    toast('已作为新合同上传');
+  }
+  document.getElementById('docTitle').textContent = c.name;
+  document.getElementById('docMeta').innerHTML = buildDocMeta(c);
+  state.contractLoaded = true;
+  state.currentStatus = c.status;
+  state.reviewDirty = false;
+  showView('work');
+  renderAll();
+  document.getElementById('reviewing').classList.remove('hidden');
+  document.getElementById('reviewingText').textContent = 'AI 正在解析合同并初审…';
+  document.getElementById('clauseList').style.opacity=.3;
+  setTimeout(()=>{
+    if(uploadMode==='new' && c.ver==='v1'){
+      c.ver = 'v2';
+      c.baseVer = 'v1';
+      c.baselineLabel = 'v1（我方标准合同 · 比对基准）';
+      appendChangeLog(c.id, {
+        ver:'v2', time:chlogNow(), user:'系统/AI', post:'-', type:'diff', clause:'—',
+        detail:'相对 v1 检测到 4 处变更：付款账期、违约金比例、预付款删除、新增条款'
+      });
+      appendChangeLog(c.id, {
+        ver:'v2', time:chlogNow(), user:USER_NAMES[state.user]||state.user, post:state.post,
+        type:'upload', clause:'—', detail:'上传对方修改版，关联为本合同 v2'
+      });
+    } else if(uploadMode==='version'){
+      appendChangeLog(c.id, {
+        ver:c.ver, time:chlogNow(), user:'系统/AI', post:'-', type:'diff', clause:'—',
+        detail:`相对 ${c.baseVer} 检测到 4 处变更：付款账期、违约金比例、预付款删除、新增条款`
+      });
+    }
+    c.status = '待人工复核';
+    c.updated = chlogNow();
+    state.currentStatus = '待人工复核';
+    document.getElementById('reviewing').classList.add('hidden');
+    document.getElementById('clauseList').style.opacity=1;
+    document.getElementById('docMeta').innerHTML = buildDocMeta(c);
+    renderStatusSteps();
+    renderList();
+    renderAll();
+    toast('AI 初审完成，当前版本：待人工复核');
+    setTimeout(locateForPost, 300);
+    if(uploadMode==='new'){
+      setTimeout(()=>document.getElementById('matchModal').classList.remove('hidden'), 800);
+    }
+  }, 1600);
+}
+function closeMatch(){ document.getElementById('matchModal').classList.add('hidden'); }
+function linkVersion(){
+  closeMatch();
+  const c = contractList.find(x=>x.id===state.currentContractId);
+  if(c){
+    const prevVer = c.ver;
+    c.status='AI初审中';
+    c.ver=nextVer(c.ver);
+    c.demo = true;
+    c.baseVer = prevVer;
+    c.baselineLabel = prevVer+'（上一版本 · 比对基准）';
+    state.currentStatus='AI初审中';
+    appendChangeLog(c.id, {
+      ver:c.ver, time:chlogNow(), user:USER_NAMES[state.user]||state.user, post:state.post,
+      type:'upload', clause:'—', detail:`疑似匹配后关联为新版本 ${c.ver}，比对基准 ${prevVer}`
+    });
+    document.getElementById('docMeta').innerHTML = buildDocMeta(c);
+    renderStatusSteps();
+    renderList();
+  }
+  toast('已关联为新版本，状态重置为 AI初审中');
+}
+/* 按岗位定位到关注的第一条（F14） */
+function locateForPost(){
+  const focus = POST_FOCUS[state.post] || [];
+  if(!focus.length || !isDemoContract(contractList.find(x=>x.id===state.currentContractId))) return;
+  const firstId = clauses.find(c=>focus.includes(c.id))?.id;
+  if(!firstId) return;
+  const navEls = document.querySelectorAll('.nav-item');
+  clauses.forEach((c,i)=>{ if(c.id===firstId && navEls[i]) gotoClause(firstId, navEls[i]); });
+  toast('已按【'+state.post+'】岗位定位到关注的条款');
+}
+function resetUpload(){
+  state.contractLoaded=false;
+  document.getElementById('unsupportBox').classList.add('hidden');
+  goUpload();
+}
+
+/* ============ 渲染 ============ */
+function renderAll(){
+  renderStatusSteps();
+  const c = contractList.find(x=>x.id===state.currentContractId);
+  if(!isDemoContract(c)){
+    renderEmptyWorkbench(c);
+    return;
+  }
+  document.querySelector('.risk-summary').classList.remove('hidden');
+  document.querySelector('.sidenav').classList.remove('hidden');
+  document.getElementById('workbench').classList.add('has-preview');
+  document.getElementById('docPreview').classList.remove('hidden');
+  renderSummary();
+  renderNav();
+  renderClauses();
+  renderDocPreview();
+  syncStanceLock();
+}
+
+function renderEmptyWorkbench(c){
+  document.getElementById('workbench').classList.remove('has-preview');
+  document.getElementById('docPreview').classList.add('hidden');
+  state.docHighlightId = null;
+  document.querySelector('.risk-summary').classList.add('hidden');
+  const sidenav = document.querySelector('.sidenav');
+  sidenav.classList.remove('hidden');
+  document.getElementById('navTitle').textContent = '本轮变更';
+  document.getElementById('navList').innerHTML = `<div style="padding:12px 18px;font-size:12.5px;color:var(--ink-soft);line-height:1.6;">本合同暂无演示级条款数据。</div>`;
+  const reviewing = c && c.status==='AI初审中';
+  document.getElementById('clauseList').innerHTML = `<div class="workbench-empty">
+    <h3>${reviewing ? 'AI 初审进行中' : '演示数据暂未覆盖此合同'}</h3>
+    <p>${reviewing
+      ? '该版本正在排队解析与初审，完成后将出现在变更清单中。本原型未接入真实后端，请打开下方演示合同样本体验完整流程。'
+      : '本交互原型仅对标记为「演示合同」的样本提供完整条款比对、AI 解读与审阅操作。列表中的其它合同用于展示合同库与状态流转。'}</p>
+    <div class="empty-actions">
+      <button type="button" onclick="openContract('c1')">打开演示合同（每日互动）</button>
+      <button type="button" class="outline" onclick="goUpload()">上传新的演示合同</button>
+    </div>
+  </div>`;
+}
+
+function renderStatusSteps(){
+  const st = state.currentStatus || '待人工复核';
+  const curIdx = STATUS_STEPS.indexOf(st);
+  let html = '';
+  STATUS_STEPS.forEach((s,i)=>{
+    const cls = i<curIdx ? 'done' : (i===curIdx ? 'current' : '');
+    const mark = i<curIdx ? '✓' : (i+1);
+    html += `<div class="step ${cls}"><span class="dot">${mark}</span><span class="lbl">${s}</span></div>`;
+    if(i<STATUS_STEPS.length-1) html += `<div class="step-line ${i<curIdx?'done':''}"></div>`;
+  });
+  document.getElementById('statusSteps').innerHTML = html;
+}
+
+function renderSummary(){
+  const grid = document.getElementById('riskGrid');
+  grid.innerHTML = fields.map(f=>{
+    const [label,cls] = fieldTag[f.name][state.stance];
+    return `<div class="risk-cell">
+      <div class="field">${f.name}</div>
+      <div class="change"><span class="from">${f.from}</span><span class="arr">→</span><span class="to">${f.to}</span></div>
+      <span class="tag ${cls}">${label}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('summaryLead').innerHTML =
+    `<span style="color:#a8b0bc">立场</span> <b style="color:var(--navy)">${ROLE_NAME[state.stance]}</b>`
+    + `<span style="color:#d5d8d2;margin:0 8px">|</span>`
+    + `<span style="color:#a8b0bc">v1 → v2 核心字段变更</span>`;
+}
+
+function renderNav(){
+  const focus = POST_FOCUS[state.post] || [];
+  const list = getActiveClauses();
+  document.getElementById('navTitle').innerHTML = '本轮变更 · '+list.length+' 处　<span style="color:var(--gold);font-weight:400">★ '+state.post+'关注</span>';
+  document.getElementById('navList').innerHTML = list.map((c,i)=>{
+    const rs = reviewState[c.id];
+    const isFocus = focus.includes(c.id);
+    const st = rs.applied ? '<span class="st" style="color:var(--gold)">已应用</span>'
+             : rs.decision==='accept' ? '<span class="st st-acc">已接受</span>'
+             : rs.decision==='reject' ? '<span class="st st-rej">已拒绝</span>'
+             : (isFocus ? '<span class="st" style="color:var(--gold)">★</span>' : '');
+    return `<div class="nav-item${i===0?' active':''}${isFocus?' focus':''}" onclick="gotoClause('${c.id}',this)">
+      <span class="nav-dot dot-${c.risk}"></span>
+      <span class="nav-clause">${c.code} ${c.title.replace(/第.条\s?\d?\s?/,'')}</span>${st}
+    </div>`;
+  }).join('');
+}
+
+function clauseFlagHtml(flag){
+  if(flag==='add') return '<span class="clause-flag flag-add">新增</span>';
+  if(flag==='del') return '<span class="clause-flag flag-del">删除</span>';
+  return '<span class="clause-flag flag-mod">修改</span>';
+}
+function clauseBodyHtml(c){
+  if(c.flag==='add'){
+    return `<div class="clause-body"><div class="col added-full"><div class="col-label">当前 v2 · 新增</div><p class="clause-text">${c.addedFull||''}</p></div></div>`;
+  }
+  if(c.flag==='del'){
+    const neo = c.neo
+      ? `<p class="clause-text">${c.neo}</p>`
+      : `<p class="clause-text del-empty">（该条款已在当前版本中删除）</p>`;
+    return `<div class="clause-body">
+      <div class="col old"><div class="col-label">基准 v1 · 已删除</div><p class="clause-text">${c.old}</p></div>
+      <div class="col new del-col"><div class="col-label">当前 v2</div>${neo}</div>
+    </div>`;
+  }
+  return `<div class="clause-body">
+    <div class="col old"><div class="col-label">基准 v1</div><p class="clause-text">${c.old}</p></div>
+    <div class="col new"><div class="col-label">当前 v2</div><p class="clause-text">${c.neo}</p></div>
+  </div>`;
+}
+
+function suggestBlockHtml(c, rs){
+  if(!c.suggestion) return '';
+  const applied = rs.applied;
+  const applyBtn = applied
+    ? `<button type="button" class="apply-btn outline" onclick="undoApplyClause('${c.id}')">撤销应用</button>`
+    : `<button type="button" class="apply-btn" onclick="applyClause('${c.id}')">一键应用进 v2</button>`;
+  return `<div class="suggest">
+    <div class="suggest-head">
+      <span class="suggest-label">修改建议</span>
+      ${applyBtn}
+    </div>
+    <p class="suggest-text">${c.suggestion[state.stance]}</p>
+    <p class="suggest-hint">${applied ? '✓ 已写入上方「当前 v2」正文 · 可撤销恢复' : '点击右侧按钮，将建议写入上方「当前 v2」正文'}</p>
+  </div>`;
+}
+
+function renderClauses(){
+  document.getElementById('clauseList').innerHTML = clauses.map(c=>{
+    const rs = reviewState[c.id];
+    const flagHtml = clauseFlagHtml(c.flag);
+    const doneFlag = rs.decision==='accept' ? '<span class="done-flag st-acc">已接受</span>'
+                   : rs.decision==='reject' ? '<span class="done-flag st-rej">已拒绝</span>' : '';
+    const body = clauseBodyHtml(c);
+    const note = rs.note ? `<div class="annotation"><b>批注：</b>${escapeHtml(rs.note)}</div>` : '';
+    const sug = suggestBlockHtml(c, rs);
+    const legal = c.legalBasis && c.legalBasis.length
+      ? `<div class="legal-ref"><span class="ai-mark">法律依据</span><div>${c.legalBasis.map(b=>{
+          const refId = b.id || findLegalId(b.law, b.no);
+          return `<a href="#" onclick="event.preventDefault();openLegalRef('${refId||''}','${b.law}','${b.no}')">《${b.law}》${b.no}</a> · ${b.point}`;
+        }).join('<br>')}</div></div>`
+      : (c.legalBasis ? `<div class="legal-ref"><span class="ai-mark">法律依据</span><div style="color:#999;">本条款为商业约定，暂无匹配法条（不强行引用）</div></div>` : '');
+    return `<article class="clause ${rs.decision==='accept'?'accepted':rs.decision==='reject'?'rejected':''}" id="clause-${c.id}">
+      <div class="clause-head">
+        <div class="clause-title">${c.title} ${flagHtml} ${doneFlag}</div>
+        <div class="clause-actions">
+          <button type="button" class="ca-btn accept ${rs.decision==='accept'?'on-acc':''}" onclick="decide('${c.id}','accept')">接受</button>
+          <button type="button" class="ca-btn reject ${rs.decision==='reject'?'on-rej':''}" onclick="decide('${c.id}','reject')">拒绝</button>
+          <button type="button" class="ca-btn" onclick="annotate('${c.id}')">${rs.note ? '编辑批注' : '批注'}</button>
+        </div>
+      </div>
+      ${body}
+      ${sug}
+      ${legal}
+      <div class="interpret"><span class="ai-mark">AI 解读</span><div>${c.ai[state.stance]}</div></div>
+      ${note}
+    </article>`;
+  }).join('');
+}
+
+/* ============ 交互：定位 / 决策 / 批注 ============ */
+function gotoClause(id, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const t = document.getElementById('clause-'+id);
+  if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+  if(isDemoContract(contractList.find(x=>x.id===state.currentContractId))) highlightDocSection(id);
+}
+function applyClause(id){
+  const c = clauses.find(x=>x.id===id);
+  if(!c || !c.suggestion){ toast('暂无修改建议可应用'); return; }
+  const rs = reviewState[id];
+  if(rs.applied){ toast('该条款建议已应用'); return; }
+  const sugText = c.suggestion[state.stance];
+  if(!rs.originalNeo){
+    rs.originalNeo = c.flag==='add' ? (c.addedFull||'') : (c.neo||'');
+  }
+  const appliedHtml = `<ins class="i">${escapeHtml(sugText)}</ins>`;
+  if(c.flag==='add') c.addedFull = appliedHtml;
+  else c.neo = appliedHtml;
+  rs.applied = true;
+  const ctt = contractList.find(x=>x.id===state.currentContractId);
+  appendChangeLog(state.currentContractId, {
+    ver: ctt?.ver || 'v2',
+    time: chlogNow(),
+    user: USER_NAMES[state.user] || state.user || '法务',
+    post: state.post,
+    type: 'apply',
+    clause: c.title,
+    detail: '一键应用修改建议：'+sugText
+  });
+  renderClauses();
+  renderNav();
+  renderDocPreview();
+  syncStanceLock();
+  toast('修改建议已应用进当前 v2 原文');
+}
+function undoApplyClause(id){
+  const c = clauses.find(x=>x.id===id);
+  const rs = reviewState[id];
+  if(!c || !rs.applied) return;
+  if(rs.originalNeo != null){
+    if(c.flag==='add') c.addedFull = rs.originalNeo;
+    else c.neo = rs.originalNeo;
+  }
+  rs.applied = false;
+  rs.originalNeo = null;
+  const ctt = contractList.find(x=>x.id===state.currentContractId);
+  appendChangeLog(state.currentContractId, {
+    ver: ctt?.ver || 'v2',
+    time: chlogNow(),
+    user: USER_NAMES[state.user] || state.user || '法务',
+    post: state.post,
+    type: 'apply',
+    clause: c.title,
+    detail: '撤销应用，恢复应用前 v2 正文'
+  });
+  renderClauses();
+  renderNav();
+  renderDocPreview();
+  syncStanceLock();
+  toast('已撤销应用，正文已恢复');
+}
+function decide(id, d){
+  reviewState[id].decision = (reviewState[id].decision===d)?null:d;
+  renderClauses(); renderNav();
+  syncStanceLock();
+  const msg = reviewState[id].decision==='accept' ? '已标记接受（认可此变更，不改正文）'
+            : reviewState[id].decision==='reject' ? '已标记拒绝（不认可此变更）' : '已撤销复审标记';
+  toast(msg);
+}
+function annotate(id){
+  const c = clauses.find(x=>x.id===id);
+  if(!c) return;
+  annotateTargetId = id;
+  document.getElementById('annotateClauseTitle').textContent = c.title;
+  const ctt = contractList.find(x=>x.id===state.currentContractId);
+  document.getElementById('annotateClauseMeta').textContent =
+    (ctt ? ctt.ver+' · '+ctt.status+' · ' : '')+'批注人 '+ (USER_NAMES[state.user]||state.user||'法务') +'（'+state.post+'）';
+  const ta = document.getElementById('annotateInput');
+  const prev = reviewState[id].note || '';
+  ta.value = prev;
+  document.getElementById('annotateModalTitle').textContent = prev ? '编辑批注' : '添加批注';
+  document.getElementById('annotateDeleteBtn').classList.toggle('hidden', !prev);
+  document.getElementById('annotateModal').classList.remove('hidden');
+  setTimeout(()=>{ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 60);
+}
+let annotateTargetId = null;
+function closeAnnotateModal(){
+  annotateTargetId = null;
+  document.getElementById('annotateModal').classList.add('hidden');
+}
+function appendAnnotateLog(id, detail){
+  const c = clauses.find(x=>x.id===id);
+  const ctt = contractList.find(x=>x.id===state.currentContractId);
+  appendChangeLog(state.currentContractId, {
+    ver: ctt?.ver || 'v2',
+    time: chlogNow(),
+    user: USER_NAMES[state.user] || state.user || '法务',
+    post: state.post,
+    type: 'annotate',
+    clause: c?.title || id,
+    detail
+  });
+}
+function deleteAnnotate(){
+  const id = annotateTargetId;
+  if(!id) return;
+  const prev = reviewState[id].note || '';
+  if(!prev) return;
+  reviewState[id].note = '';
+  appendAnnotateLog(id, '删除批注：'+prev);
+  closeAnnotateModal();
+  renderClauses();
+  renderNav();
+  syncStanceLock();
+  toast('已删除批注');
+}
+function saveAnnotate(){
+  const id = annotateTargetId;
+  if(!id) return;
+  const v = document.getElementById('annotateInput').value.trim();
+  const prev = reviewState[id].note || '';
+  reviewState[id].note = v;
+  if(v && v !== prev){
+    appendAnnotateLog(id, '批注：'+v);
+  } else if(!v && prev){
+    appendAnnotateLog(id, '删除批注：'+prev);
+  }
+  closeAnnotateModal();
+  renderClauses();
+  renderNav();
+  syncStanceLock();
+  toast(v ? (prev ? '已更新批注并留痕' : '已添加批注并留痕') : (prev ? '已删除批注' : '未填写批注'));
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && !document.getElementById('annotateModal').classList.contains('hidden')) closeAnnotateModal();
+});
+
+/* ============ 工具 ============ */
+function escapeHtml(s){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1900);
+}
+/* ============ 系统配置（整页，含模型配置 F15）============ */
+function goSystem(){ showView('system'); sysTab('model'); }
+function sysTab(t){
+  document.querySelectorAll('#systemView .sys-tab').forEach(el=>el.classList.toggle('active', el.dataset.tab===t));
+  document.querySelectorAll('#systemView .sys-pane').forEach(el=>el.classList.toggle('hidden', el.dataset.pane!==t));
+  if(t==='focus') renderFocusMatrix();
+}
+
+/* ============ 岗位关注点（标签机制：岗位→关注的条款类型）============ */
+const FOCUS_TAGS = ['价格/金额','付款/账期','违约金/赔偿','交付/验收','质保期','保密/数据','知识产权','合同效力','解除/终止','争议解决'];
+// AI 默认推荐（管理员未配置时使用）
+const FOCUS_AI = {
+  '销售': ['价格/金额','付款/账期','交付/验收'],
+  '法务': ['违约金/赔偿','合同效力','解除/终止','保密/数据','知识产权','争议解决'],
+  '商务': ['交付/验收','质保期','价格/金额'],
+  '财务': ['付款/账期','违约金/赔偿','价格/金额'],
+};
+// 管理员配置（null = 未配置，走 AI 默认）
+let focusConfig = { '销售':null, '法务':null, '商务':null, '财务':null };
+// 个人微调（覆盖各自岗位的生效集合）：null = 跟随岗位默认
+let myFocusSet = null;
+function effectiveFocus(post){ return focusConfig[post] ? focusConfig[post].slice() : FOCUS_AI[post].slice(); }
+
+function renderFocusMatrix(){
+  const posts = ['销售','法务','商务','财务'];
+  document.getElementById('focusMatrix').innerHTML = posts.map(p=>{
+    const sel = focusConfig[p] || FOCUS_AI[p];
+    const isAI = !focusConfig[p];
+    const chks = FOCUS_TAGS.map(tag=>{
+      const on = sel.includes(tag);
+      return `<label class="tagchk ${on?'on':''}"><input type="checkbox" ${on?'checked':''} onchange="toggleFocus('${p}','${tag}',this.checked)">${tag}</label>`;
+    }).join('');
+    return `<div class="focus-row"><div class="focus-post">${p}${isAI?'<span class="ai-flag">AI 默认</span>':''}</div>${chks}</div>`;
+  }).join('');
+}
+function toggleFocus(post, tag, on){
+  let cur = focusConfig[post] ? focusConfig[post].slice() : FOCUS_AI[post].slice();
+  if(on){ if(!cur.includes(tag)) cur.push(tag); } else { cur = cur.filter(t=>t!==tag); }
+  focusConfig[post] = cur;   // 一旦手动调整即视为“已配置”
+  renderFocusMatrix();
+}
+function aiFocusDefault(){
+  focusConfig = { '销售':null, '法务':null, '商务':null, '财务':null };  // 全部回到 AI 默认
+  renderFocusMatrix();
+  toast('已按合同类型生成 AI 默认关注点');
+}
+function saveFocus(){ toast('岗位关注点已保存'); }
+
+/* 个人“我的关注点” */
+function goMyFocus(){ showView('myfocus'); renderMyFocus(); }
+function renderMyFocus(){
+  const post = state.post || '法务';
+  document.getElementById('mfPost').textContent = post;
+  const base = effectiveFocus(post);                 // 岗位生效默认
+  const mine = myFocusSet || base;                   // 个人集合
+  document.getElementById('myFocusList').innerHTML = FOCUS_TAGS.map(tag=>{
+    const on = mine.includes(tag), isDefault = base.includes(tag);
+    return `<label class="tagchk ${on?'on':''}"><input type="checkbox" ${on?'checked':''} onchange="toggleMyFocus('${tag}',this.checked)">${tag}${isDefault?' <span class="df">· 默认</span>':''}</label>`;
+  }).join('');
+}
+function toggleMyFocus(tag, on){
+  const post = state.post || '法务';
+  let cur = (myFocusSet || effectiveFocus(post)).slice();
+  if(on){ if(!cur.includes(tag)) cur.push(tag); } else { cur = cur.filter(t=>t!==tag); }
+  myFocusSet = cur; renderMyFocus();
+}
+function resetMyFocus(){ myFocusSet = null; renderMyFocus(); toast('已恢复为岗位默认关注点'); }
+function saveMyFocus(){ toast('我的关注点已保存'); }
+function testModel(){
+  const m = document.getElementById('cfgModel').value;
+  toast('正在测试…'); setTimeout(()=>toast('连通正常：'+m+'（演示）'), 700);
+}
+function saveSettings(){ toast('系统配置已保存'); }
+
+/* 回车登录 */
+document.getElementById('loginPwd').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
