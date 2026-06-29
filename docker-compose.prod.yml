@@ -1,0 +1,26 @@
+# e540 生产：使用宿主机已有 PostgreSQL（mingheng-pg :5432），仅起 api + web
+services:
+  api:
+    build: ./app/api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-mingheng}:${POSTGRES_PASSWORD}@host.docker.internal:5432/${POSTGRES_DB:-mingheng}
+      UPLOAD_DIR: /data/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads:/data/uploads
+    restart: unless-stopped
+
+  web:
+    build: ./app/web
+    ports:
+      - "8088:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  uploads:

@@ -1,0 +1,51 @@
+.list-wrap { max-width: 1040px; margin: 26px auto; padding: 0 24px; }
+.list-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+.list-head h1 { font-family: 'Noto Serif SC', serif; font-size: 21px; color: var(--navy); }
+.list-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+.list-tools { display: flex; align-items: center; gap: 10px; }
+.search {
+  padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 2px;
+  font-size: 13px; width: 220px; font-family: inherit; background: var(--paper);
+}
+.search:focus { outline: none; border-color: var(--navy); }
+.filter {
+  padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 2px;
+  font-size: 13px; font-family: inherit; background: var(--paper); color: var(--ink-soft);
+}
+.ms-filter { position: relative; }
+.ms-btn { padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 2px; font-size: 13px; font-family: inherit; background: var(--paper); color: var(--ink-soft); cursor: pointer; min-width: 120px; text-align: left; }
+.ms-btn:hover { border-color: var(--navy-soft); color: var(--navy); }
+.ms-menu { position: absolute; top: calc(100% + 4px); left: 0; min-width: 160px; background: #fff; border: 1px solid var(--line); border-radius: 3px; box-shadow: 0 6px 18px rgba(0,0,0,.12); padding: 6px 0; z-index: 25; }
+.ms-opt { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; color: var(--navy); cursor: pointer; }
+.ms-opt:hover { background: var(--paper-dim); }
+.ms-opt input { accent-color: var(--navy); margin: 0; }
+.ctable {
+  width: 100%; border-collapse: collapse; background: var(--paper);
+  border: 1px solid var(--line); border-radius: 2px;
+}
+.ctable thead, .ctable tr:first-child td { /* 保持表头圆角 */ }
+.ctable tbody tr:last-child td { border-bottom: none; }
+.ctable th {
+  font-size: 11.5px; letter-spacing: 1px; color: var(--ink-soft);
+  text-align: left; padding: 11px 16px; background: var(--paper-dim);
+  border-bottom: 1px solid var(--line); font-weight: 700;
+}
+.ctable td { padding: 13px 16px; font-size: 13.5px; border-bottom: 1px solid var(--line); color: var(--ink); }
+.ctable tbody tr { cursor: pointer; }
+.ctable tbody tr:hover { background: var(--paper-dim); }
+.ctable .cname { font-family: 'Noto Serif SC', serif; font-weight: 600; color: var(--navy); }
+.ctable .no { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+/* 合同编号缺失：小问号图标，hover 显示原因（title 属性）*/
+.no-missing { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line); color: #b8bfc8; font-size: 11px; cursor: help; }
+.no-missing:hover { border-color: var(--gold); color: var(--gold); }
+.stt { font-size: 11px; padding: 2px 9px; border-radius: 2px; white-space: nowrap; }
+.stt-wait { background: #f0eee6; color: var(--ink-soft); }
+.stt-ai { background: #eaf0f6; color: var(--navy); }
+.stt-doing { background: var(--ins-bg); color: var(--ins); }
+.stt-done { background: var(--ok-bg); color: var(--ok); }
+.empty { padding: 40px; text-align: center; color: var(--ink-soft); font-size: 13px; }
+.upload-btn {
+  background: var(--navy); color: #fff; border: none;
+  padding: 8px 18px; border-radius: 2px; font-size: 13px; letter-spacing: 1px;
+}
+.upload-btn:hover { background: var(--navy-soft); }

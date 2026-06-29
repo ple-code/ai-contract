@@ -298,10 +298,28 @@ button{font-family:inherit;cursor:pointer;}
 .step-line.done{background:#c5ccd8;}
 .returned-tag{margin-left:16px;font-size:11.5px;background:#fbf3e0;color:var(--risk-mid);padding:3px 10px;border-radius:2px;}
 
-/* ===== 主体两栏 / 三栏（含全文预览 F1 mock）===== */
-.layout{display:grid;grid-template-columns:230px minmax(0,1fr);flex:1;min-height:0;overflow:hidden;}
-.layout.has-preview{grid-template-columns:230px minmax(0,1fr) 300px;}
-.doc-preview{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;}
+/* ===== 主体两栏 / 三栏（含全文预览 F1 mock · 可拖动分隔）===== */
+.layout{
+  --wb-nav-w:230px;
+  --wb-preview-w:300px;
+  display:grid;
+  grid-template-columns:var(--wb-nav-w) 6px minmax(180px,1fr);
+  flex:1;min-height:0;overflow:hidden;
+}
+.layout.has-preview{grid-template-columns:var(--wb-nav-w) 6px minmax(180px,1fr) 6px var(--wb-preview-w);}
+.layout-split{
+  position:relative;z-index:4;cursor:col-resize;touch-action:none;
+  background:transparent;min-height:0;
+}
+.layout-split::after{
+  content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;
+  background:var(--line);transform:translateX(-50%);pointer-events:none;
+}
+.layout-split:hover,.layout-split.dragging{background:rgba(176,141,79,.18);}
+.layout-split.dragging::after{background:var(--gold);width:2px;}
+.layout:not(.has-preview) #splitPreview{display:none;}
+body.col-resizing{cursor:col-resize !important;user-select:none !important;}
+.doc-preview{background:#fff;display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;}
 .doc-preview-head{padding:12px 16px 10px;border-bottom:1px solid var(--line);background:var(--paper-dim);flex-shrink:0;}
 .doc-preview-head h3{font-family:'Noto Serif SC',serif;font-size:14px;color:var(--navy);margin:0 0 4px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .doc-preview-tag{font-size:10px;background:#eef0f4;color:var(--navy-soft);padding:2px 8px;border-radius:2px;font-family:'Noto Sans SC',sans-serif;font-weight:500;white-space:nowrap;}
@@ -320,7 +338,7 @@ button{font-family:inherit;cursor:pointer;}
 .doc-block.doc-deleted .doc-old{text-decoration:line-through;color:var(--ink-soft);}
 .doc-del-note{font-size:12px;color:var(--del);margin-top:6px;font-style:italic;}
 .doc-block.doc-add{background:#f7faf4;box-shadow:inset 3px 0 0 var(--ok);}
-.sidenav{background:var(--paper-dim);border-right:1px solid var(--line);padding:16px 0;overflow-y:auto;min-height:0;height:100%;}
+.sidenav{background:var(--paper-dim);padding:16px 0;overflow-y:auto;min-height:0;height:100%;}
 .sidenav h2{font-size:11px;letter-spacing:1px;color:#a8b0bc;text-transform:uppercase;padding:0 18px 10px;font-weight:600;}
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:13px;cursor:pointer;border-left:3px solid transparent;color:#8b939e;}
 .nav-item:hover{background:rgba(255,255,255,.55);color:var(--ink-soft);}
@@ -367,7 +385,17 @@ button{font-family:inherit;cursor:pointer;}
 .upload-mode{display:flex;gap:16px;margin-bottom:10px;}
 .upload-mode label{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--navy);cursor:pointer;}
 .upload-target{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
-.upload-target select{width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:2px;font-size:13px;font-family:inherit;background:#fff;}
+.upload-picker{position:relative;text-align:left;}
+.upload-picker input{width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:2px;font-size:13px;font-family:inherit;background:#fff;box-sizing:border-box;}
+.upload-picker input:focus{border-color:var(--navy-soft);outline:none;}
+.upload-picker-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.12);z-index:30;text-align:left;}
+.upload-picker-opt{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);}
+.upload-picker-opt:last-child{border-bottom:none;}
+.upload-picker-opt:hover,.upload-picker-opt.active{background:var(--paper-dim);}
+.upload-picker-opt.active{border-left:3px solid var(--gold);padding-left:9px;}
+.upload-picker-opt .opt-name{display:block;font-size:13px;color:var(--navy);line-height:1.4;}
+.upload-picker-opt .opt-no{display:block;font-size:11.5px;color:var(--ink-soft);margin-top:2px;font-variant-numeric:tabular-nums;}
+.upload-picker-empty{padding:14px 12px;font-size:13px;color:var(--ink-soft);text-align:center;}
 .upload-target .hint{font-size:11.5px;color:var(--ink-soft);margin-top:6px;}
 .done-flag{font-size:11px;padding:2px 8px;border-radius:2px;}
 .clause-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;border-left:1px solid var(--line);padding-left:12px;}
@@ -621,7 +649,11 @@ ins.i{color:var(--ins);background:var(--ins-bg);text-decoration:underline;text-u
           <label><input type="radio" name="uploadMode" value="version" onchange="setUploadMode('version')"> 已有合同的新版本</label>
         </div>
         <div id="uploadTargetRow" class="upload-target hidden">
-          <select id="uploadTarget" onchange="uploadTargetId=this.value"></select>
+          <div class="upload-picker" id="uploadPicker">
+            <input type="text" id="uploadTargetSearch" placeholder="搜索合同名称 / 编号…" autocomplete="off"
+              oninput="onUploadTargetSearch()" onfocus="openUploadTargetMenu()" />
+            <div class="upload-picker-menu hidden" id="uploadTargetMenu"></div>
+          </div>
           <div class="hint">比对基准 = 所选合同的<strong>当前版本</strong>（上一版作 diff 参照）</div>
         </div>
       </div>
@@ -692,6 +724,7 @@ ins.i{color:var(--ins);background:var(--ins-bg);text-decoration:underline;text-u
       <h2 id="navTitle">本轮变更</h2>
       <div id="navList"></div>
     </nav>
+    <div class="layout-split" id="splitNav" title="拖动调整左侧宽度"></div>
     <main class="main">
       <section class="risk-summary">
         <h2>关键字段变更摘要</h2>
@@ -701,11 +734,12 @@ ins.i{color:var(--ins);background:var(--ins-bg);text-decoration:underline;text-u
       <div id="reviewing" class="reviewing hidden"><span class="spin"></span><span id="reviewingText">AI 正在按当前立场重新初审…</span></div>
       <div class="clause-list" id="clauseList"></div>
     </main>
+    <div class="layout-split" id="splitPreview" title="拖动调整右侧预览宽度"></div>
     <aside id="docPreview" class="doc-preview hidden">
       <div class="doc-preview-head">
         <h3>全文预览 <span class="doc-preview-tag" id="docPreviewVer">v2</span></h3>
       </div>
-      <p class="doc-preview-note">F1 在线查看（演示 mock）· 标黄为 AI 识别风险 · 点击左侧变更项可定位</p>
+      <p class="doc-preview-note" id="docPreviewNote">F1 在线查看（演示 mock）· 标黄为 AI 识别风险 · 点击左侧变更项可定位</p>
       <div class="doc-preview-body" id="docPreviewBody"></div>
     </aside>
   </div>
@@ -1197,6 +1231,7 @@ function closeUserMenu(){ document.getElementById('suMenu').classList.add('hidde
 document.addEventListener('click', e=>{
   if(!e.target.closest('#sideUser')) closeUserMenu();
   if(!e.target.closest('#statusFilter')) closeStatusMenu();
+  if(!e.target.closest('#uploadPicker')) closeUploadTargetMenu();
   if(!e.target.closest('#exportGroup') && !e.target.closest('.row-menu')) closeExportMenus();
 });
 
@@ -1646,10 +1681,83 @@ function setUploadMode(mode){
   document.getElementById('uploadTargetRow').classList.toggle('hidden', mode!=='version');
   if(mode==='version') refreshUploadTargets();
 }
+function uploadTargetLabel(c){
+  return `${c.name}（${c.no} · 当前 ${c.ver}）`;
+}
+function uploadSearchKeyword(raw){
+  const v = (raw || '').trim();
+  if(!v) return '';
+  const picked = uploadTargetId && contractList.find(c=>c.id===uploadTargetId);
+  if(picked && v === uploadTargetLabel(picked)) return ''; // 已选中展示文案，展开时视为「未在搜索」
+  return v.toLowerCase();
+}
+function matchUploadTarget(c, kw){
+  if(!kw) return true;
+  const hay = (c.name + ' ' + c.no).toLowerCase();
+  if(hay.includes(kw)) return true;
+  // 拆词模糊：支持只输编号片段或名称片段
+  const tokens = kw.split(/[\s·（）()/\-]+/).filter(t=>t.length>=2);
+  return tokens.length > 0 && tokens.every(t=>hay.includes(t));
+}
+function findUploadTargetByInput(val){
+  const v = (val || '').trim();
+  if(!v) return null;
+  const exact = contractList.find(c=>uploadTargetLabel(c)===v);
+  if(exact) return exact;
+  const kw = uploadSearchKeyword(v);
+  return contractList.find(c=>matchUploadTarget(c, kw)) || null;
+}
+function renderUploadTargetMenu(keyword){
+  const menu = document.getElementById('uploadTargetMenu');
+  const kw = uploadSearchKeyword(keyword);
+  const rows = contractList.filter(c=>matchUploadTarget(c, kw));
+  menu.innerHTML = rows.length
+    ? rows.map(c=>`<div class="upload-picker-opt ${c.id===uploadTargetId?'active':''}" onclick="selectUploadTarget('${c.id}')">
+        <span class="opt-name">${escapeHtml(c.name)}</span>
+        <span class="opt-no">${escapeHtml(c.no)} · 当前 ${escapeHtml(c.ver)}</span>
+      </div>`).join('')
+    : `<div class="upload-picker-empty">无匹配合同，请换关键词（名称 / 编号）</div>`;
+  menu.classList.remove('hidden');
+}
 function refreshUploadTargets(){
-  const sel = document.getElementById('uploadTarget');
-  sel.innerHTML = contractList.map(c=>`<option value="${c.id}">${c.name}（${c.no} · 当前 ${c.ver}）</option>`).join('');
-  uploadTargetId = sel.value;
+  if(!uploadTargetId || !contractList.some(c=>c.id===uploadTargetId)){
+    uploadTargetId = contractList[0]?.id || null;
+  }
+  const picked = contractList.find(x=>x.id===uploadTargetId);
+  const input = document.getElementById('uploadTargetSearch');
+  if(input){
+    input.value = picked ? uploadTargetLabel(picked) : '';
+  }
+  closeUploadTargetMenu();
+}
+function openUploadTargetMenu(){
+  const input = document.getElementById('uploadTargetSearch');
+  renderUploadTargetMenu(''); // 聚焦先展示全部，避免用「已选完整文案」误过滤
+  setTimeout(()=>input.select(), 0);
+}
+function onUploadTargetSearch(){
+  const input = document.getElementById('uploadTargetSearch');
+  const picked = uploadTargetId && contractList.find(c=>c.id===uploadTargetId);
+  if(picked && input.value === uploadTargetLabel(picked)) return;
+  uploadTargetId = null;
+  renderUploadTargetMenu(input.value);
+}
+function selectUploadTarget(id){
+  uploadTargetId = id;
+  const c = contractList.find(x=>x.id===id);
+  const input = document.getElementById('uploadTargetSearch');
+  if(input) input.value = c ? uploadTargetLabel(c) : '';
+  closeUploadTargetMenu();
+}
+function closeUploadTargetMenu(){
+  const menu = document.getElementById('uploadTargetMenu');
+  if(menu) menu.classList.add('hidden');
+  if(!uploadTargetId){
+    const input = document.getElementById('uploadTargetSearch');
+    const hit = findUploadTargetByInput(input?.value);
+    if(hit) selectUploadTarget(hit.id);
+    else refreshUploadTargets();
+  }
 }
 function uploadDemo(kind){
   document.getElementById('unsupportBox').classList.add('hidden');
@@ -1782,9 +1890,11 @@ function renderAll(){
   renderStatusSteps();
   const c = contractList.find(x=>x.id===state.currentContractId);
   if(!isDemoContract(c)){
-    renderEmptyWorkbench(c);
+    if(c && c.status==='AI初审中') renderReviewingWorkbench(c);
+    else renderEmptyWorkbench(c);
     return;
   }
+  document.getElementById('reviewing').classList.add('hidden');
   document.querySelector('.risk-summary').classList.remove('hidden');
   document.querySelector('.sidenav').classList.remove('hidden');
   document.getElementById('workbench').classList.add('has-preview');
@@ -1793,6 +1903,39 @@ function renderAll(){
   renderNav();
   renderClauses();
   renderDocPreview();
+  const note = document.getElementById('docPreviewNote');
+  if(note) note.textContent = 'F1 在线查看（演示 mock）· 标黄为 AI 识别风险 · 点击左侧变更项可定位';
+  syncStanceLock();
+}
+
+function renderDocPreviewParsedOnly(){
+  const ctt = contractList.find(x=>x.id===state.currentContractId);
+  document.getElementById('docPreviewVer').textContent = (ctt?.ver || 'v1')+' · 当前版本';
+  const html = docOutline.filter(item=>item.static).map(item=>{
+    let cls = 'doc-block';
+    if(item.key==='header') return `<div class="${cls}">${item.html}</div>`;
+    return `<div class="${cls}"><h4>${item.title}</h4><p>${item.text}</p></div>`;
+  }).join('');
+  document.getElementById('docPreviewBody').innerHTML = html;
+  const note = document.getElementById('docPreviewNote');
+  if(note) note.textContent = '文档已解析 · 全文可阅 · 变更比对与风险标注待初审完成后呈现';
+}
+
+function renderReviewingWorkbench(c){
+  document.getElementById('workbench').classList.add('has-preview');
+  document.getElementById('docPreview').classList.remove('hidden');
+  state.docHighlightId = null;
+  document.querySelector('.risk-summary').classList.add('hidden');
+  document.querySelector('.sidenav').classList.remove('hidden');
+  document.getElementById('navTitle').textContent = '初审进行中';
+  document.getElementById('navList').innerHTML = `<div style="padding:12px 18px;font-size:12.5px;color:var(--ink-soft);line-height:1.65;">文档已解析，全文见右侧预览。<br>版本比对与风险清单将在 AI 初审完成后出现在此处。</div>`;
+  document.getElementById('reviewing').classList.remove('hidden');
+  document.getElementById('reviewingText').textContent = 'AI 正在比对版本并生成风险清单…';
+  document.getElementById('clauseList').innerHTML = `<div class="workbench-empty" style="padding:36px 28px;margin-top:0;border-style:solid;border-color:var(--line);">
+    <h3 style="font-size:15px;margin-bottom:8px;">解析已完成，等待 AI 初审</h3>
+    <p style="font-size:13px;line-height:1.7;margin:0;">当前可查看右侧<strong>全文预览</strong>，核对上传是否正确。<br>变更比对、AI 解读与接受/拒绝/批注等复审操作，将在状态变为「待人工复核」后开放。</p>
+  </div>`;
+  renderDocPreviewParsedOnly();
   syncStanceLock();
 }
 
@@ -1806,6 +1949,7 @@ function renderEmptyWorkbench(c){
   document.getElementById('navTitle').textContent = '本轮变更';
   document.getElementById('navList').innerHTML = `<div style="padding:12px 18px;font-size:12.5px;color:var(--ink-soft);line-height:1.6;">本合同暂无演示级条款数据。</div>`;
   const reviewing = c && c.status==='AI初审中';
+  document.getElementById('reviewing').classList.add('hidden');
   document.getElementById('clauseList').innerHTML = `<div class="workbench-empty">
     <h3>${reviewing ? 'AI 初审进行中' : '演示数据暂未覆盖此合同'}</h3>
     <p>${reviewing
@@ -2157,6 +2301,62 @@ function testModel(){
   toast('正在测试…'); setTimeout(()=>toast('连通正常：'+m+'（演示）'), 700);
 }
 function saveSettings(){ toast('系统配置已保存'); }
+
+/* ============ 工作台三栏宽度拖动（左导航 / 右预览，记忆到 localStorage）============ */
+const WB_SPLIT = { nav:230, preview:300, navMin:160, navMax:380, previewMin:220, previewMax:560 };
+function clampSplit(v, min, max){ return Math.min(max, Math.max(min, v)); }
+function loadWorkbenchSplit(){
+  try{
+    const s = JSON.parse(localStorage.getItem('mh_wb_split')||'{}');
+    if(s.nav) WB_SPLIT.nav = s.nav;
+    if(s.preview) WB_SPLIT.preview = s.preview;
+  }catch(e){}
+  applyWorkbenchSplit();
+}
+function saveWorkbenchSplit(){
+  localStorage.setItem('mh_wb_split', JSON.stringify({ nav:WB_SPLIT.nav, preview:WB_SPLIT.preview }));
+}
+function applyWorkbenchSplit(){
+  const wb = document.getElementById('workbench');
+  if(!wb) return;
+  wb.style.setProperty('--wb-nav-w', WB_SPLIT.nav+'px');
+  wb.style.setProperty('--wb-preview-w', WB_SPLIT.preview+'px');
+}
+function bindSplitDrag(el, onDelta){
+  if(!el) return;
+  el.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    let lastX = e.clientX;
+    el.classList.add('dragging');
+    document.body.classList.add('col-resizing');
+    const onMove = ev=>{
+      const dx = ev.clientX - lastX;
+      lastX = ev.clientX;
+      if(dx) onDelta(dx);
+    };
+    const onUp = ()=>{
+      el.classList.remove('dragging');
+      document.body.classList.remove('col-resizing');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      saveWorkbenchSplit();
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+function initWorkbenchSplitters(){
+  loadWorkbenchSplit();
+  bindSplitDrag(document.getElementById('splitNav'), dx=>{
+    WB_SPLIT.nav = clampSplit(WB_SPLIT.nav + dx, WB_SPLIT.navMin, WB_SPLIT.navMax);
+    applyWorkbenchSplit();
+  });
+  bindSplitDrag(document.getElementById('splitPreview'), dx=>{
+    WB_SPLIT.preview = clampSplit(WB_SPLIT.preview - dx, WB_SPLIT.previewMin, WB_SPLIT.previewMax);
+    applyWorkbenchSplit();
+  });
+}
+initWorkbenchSplitters();
 
 /* 回车登录 */
 document.getElementById('loginPwd').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});

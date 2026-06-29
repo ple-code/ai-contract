@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+:root {
+  --navy: #1a2740;
+  --navy-deep: #11192b;
+  --navy-soft: #2c3b5a;
+  --ink: #1c2230;
+  --ink-soft: #4a5568;
+  --paper: #fcfcfa;
+  --paper-dim: #f4f5f2;
+  --line: #e3e5e0;
+  --line-strong: #c9ccc4;
+  --del: #b3261e;
+  --del-bg: #fbeae8;
+  --ins: #1d5d8c;
+  --ins-bg: #e7f0f6;
+  --risk-high: #b3261e;
+  --risk-mid: #b07908;
+  --risk-low: #5a6b52;
+  --gold: #b08d4f;
+  --ok: #4a6b38;
+  --ok-bg: #e9f1e4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--paper-dim);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif { font-family: 'Noto Serif SC', serif; }
+
+button { font-family: inherit; cursor: pointer; }
+
+a { text-decoration: none; color: inherit; }
+
+.hidden { display: none !important; }

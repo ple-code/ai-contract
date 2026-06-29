@@ -1,0 +1,56 @@
+.modal-mask {
+  position: fixed; inset: 0;
+  background: rgba(17,25,43,.55);
+  display: flex; align-items: center; justify-content: center; z-index: 40;
+}
+.modal {
+  background: var(--paper); width: 560px; border-radius: 4px;
+  padding: 30px 32px; border-top: 3px solid var(--gold);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal h3 { font-family: 'Noto Serif SC', serif; font-size: 18px; color: var(--navy); margin-bottom: 4px; }
+.modal .lead { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 22px; }
+.role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.role-card {
+  border: 1.5px solid var(--line-strong); border-radius: 3px;
+  padding: 16px 14px; text-align: center; transition: .15s;
+  background: var(--paper-dim); cursor: pointer;
+}
+.role-card:hover { border-color: var(--navy-soft); }
+.role-card.sel {
+  border-color: var(--gold); background: #fff;
+  box-shadow: 0 4px 14px rgba(176,141,79,.18);
+}
+.role-card .rname {
+  font-family: 'Noto Serif SC', serif; font-size: 16px; font-weight: 600;
+  color: var(--navy); margin-bottom: 6px;
+}
+.role-card .rdesc { font-size: 11.5px; color: var(--ink-soft); line-height: 1.5; }
+.modal-foot {
+  display: flex; align-items: center; justify-content: space-between; margin-top: 24px;
+}
+.remember { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-soft); cursor: pointer; }
+.remember input { accent-color: var(--navy); }
+.confirm-btn {
+  background: var(--navy); color: #fff; border: none;
+  padding: 9px 26px; font-size: 13.5px; border-radius: 2px; letter-spacing: 1px;
+}
+.confirm-btn:hover { background: var(--navy-soft); }
+.ca-btn {
+  background: #fff; color: var(--ink-soft); border: 1px solid var(--line-strong);
+  padding: 8px 16px; font-size: 13px; border-radius: 2px;
+}
+.ca-btn:hover { border-color: var(--navy-soft); color: var(--navy); }
+.modal-foot.right { justify-content: flex-end; gap: 10px; }
+/* 重复合同确认弹框里的信息卡片 */
+.dup-info { background: var(--paper-dim); border: 1px solid var(--line); border-radius: 2px; padding: 12px 14px; margin: 4px 0 12px; }
+.dup-row { display: flex; align-items: baseline; gap: 12px; padding: 4px 0; font-size: 13px; }
+.dup-row + .dup-row { border-top: 1px dashed var(--line); }
+.dup-k { flex-shrink: 0; width: 76px; color: var(--ink-soft); font-size: 12px; }
+.dup-v { color: var(--navy); font-weight: 500; word-break: break-all; }
+.modal textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line-strong);
+  border-radius: 2px; font-size: 14px; font-family: inherit; line-height: 1.65;
+  resize: vertical; min-height: 96px; background: var(--paper-dim); color: var(--ink);
+}
+.modal textarea:focus { outline: none; border-color: var(--navy); background: #fff; }

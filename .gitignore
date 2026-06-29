@@ -27,3 +27,8 @@ tmp/
 
 # Claude Code 本地权限白名单（每人不同，不入库）
 .claude/settings.local.json
+
+# 环境变量与密钥
+.env
+.env.local
+.env.*.local

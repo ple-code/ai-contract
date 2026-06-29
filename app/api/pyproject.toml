@@ -1,0 +1,39 @@
+[project]
+name = "mingheng-api"
+version = "0.1.0"
+description = "明衡 · 合同审核 AI 后端"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "pydantic-settings>=2.5.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    # passlib 1.7.4（已停止维护）与 bcrypt≥4.1 不兼容：初始化 detect_wrap_bug 时会抛
+    # ValueError。临时 pin 到 4.0.x；后续应迁移到直接使用 bcrypt，移除 passlib 依赖。
+    "bcrypt>=4.0.1,<4.1",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.18",
+    "python-docx>=1.1.0",
+    "docxtpl>=0.16.0",
+    "pdfplumber>=0.11.0",
+    "PyMuPDF>=1.24.0",
+    "paddleocr>=2.7.0",
+    "paddlepaddle>=2.6.0",
+    "opencv-python-headless>=4.9.0",
+    "rapidfuzz>=3.10.0",
+    "cryptography>=44.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "httpx",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
