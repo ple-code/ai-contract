@@ -159,6 +159,7 @@ export default function WorkbenchPage() {
   const [reviewProgress, setReviewProgress] = useState<string[]>([]);
   const [annotateTarget, setAnnotateTarget] = useState<string | null>(null);
   const [annotateText, setAnnotateText] = useState('');
+  const [annotateHadNote, setAnnotateHadNote] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [fieldChanges, setFieldChanges] = useState<FieldChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -389,17 +390,35 @@ export default function WorkbenchPage() {
     addToast('已切换为【' + ROLE_NAME[r] + '】立场', 'success');
   };
 
+  const closeAnnotateModal = () => {
+    setAnnotateTarget(null);
+    setAnnotateText('');
+    setAnnotateHadNote(false);
+  };
+
   const doAnnotate = async () => {
     if (!contract || !annotateTarget) return;
     try {
-      await annotate(contract.current_version_id, annotateTarget, annotateText);
+      await annotate(contract.current_version_id, annotateTarget, annotateText.trim());
       const rs = await getReviewState(contract.current_version_id);
       setStates(rs.states);
-      setAnnotateTarget(null);
-      setAnnotateText('');
-      addToast('批注已保存', 'success');
+      closeAnnotateModal();
+      addToast(annotateText.trim() ? '批注已保存' : (annotateHadNote ? '已删除批注' : '未填写批注'), 'success');
     } catch (err: unknown) {
       addToast(err instanceof Error ? err.message : '批注失败', 'error');
+    }
+  };
+
+  const doDeleteAnnotate = async () => {
+    if (!contract || !annotateTarget || !annotateHadNote) return;
+    try {
+      await annotate(contract.current_version_id, annotateTarget, '');
+      const rs = await getReviewState(contract.current_version_id);
+      setStates(rs.states);
+      closeAnnotateModal();
+      addToast('已删除批注', 'success');
+    } catch (err: unknown) {
+      addToast(err instanceof Error ? err.message : '删除失败', 'error');
     }
   };
 
@@ -532,9 +551,13 @@ export default function WorkbenchPage() {
               <button className="btn-export" type="button" onClick={e => { e.stopPropagation(); setShowExport(v => !v); }}>导出 ▾</button>
               {showExport && (
                 <div className="export-menu" onClick={e => e.stopPropagation()}>
-                  <div className="export-mi" onClick={() => { setShowExport(false); window.open(`/api/versions/${contract.current_version_id}/export/revised`, '_blank'); }}>导出 Word <small>(.docx)</small></div>
-                  <div className="export-mi" onClick={() => { setShowExport(false); window.open(`/api/versions/${contract.current_version_id}/export/revised?format=pdf`, '_blank'); }}>导出 PDF <small>(.pdf)</small></div>
-                  <div className="export-mi" onClick={() => { setShowExport(false); window.open(`/api/versions/${contract.current_version_id}/export/report`, '_blank'); }}>导出变更报告</div>
+                  <div className="export-mi" onClick={() => {
+                    setShowExport(false);
+                    window.open(`/api/contracts/${contract.id}/download`, '_blank');
+                    addToast(`正在下载「${contract.name}」原文件`, 'success');
+                  }}>下载原文件</div>
+                  <div className="export-mi" onClick={() => { setShowExport(false); window.open(`/api/versions/${contract.current_version_id}/export/revised`, '_blank'); }}>Word <small>(.docx)</small></div>
+                  <div className="export-mi" onClick={() => { setShowExport(false); window.open(`/api/versions/${contract.current_version_id}/export/revised?format=pdf`, '_blank'); }}>PDF <small>(.pdf)</small></div>
                 </div>
               )}
             </div>
@@ -693,7 +716,11 @@ export default function WorkbenchPage() {
                     </div>
                     <div className="clause-actions">
                       <button type="button" className="ca-btn"
-                        onClick={() => { setAnnotateTarget(clause.code); setAnnotateText(st?.note || ''); }}>批注</button>
+                        onClick={() => {
+                          setAnnotateTarget(clause.code);
+                          setAnnotateText(st?.note || '');
+                          setAnnotateHadNote(!!st?.note);
+                        }}>{st?.note ? '编辑批注' : '批注'}</button>
                     </div>
                   </div>
                   <div className="clause-body">
@@ -837,9 +864,9 @@ export default function WorkbenchPage() {
 
       {/* Annotate modal */}
       {annotateTarget && (
-        <div className="modal-mask" onClick={() => setAnnotateTarget(null)}>
+        <div className="modal-mask" onClick={closeAnnotateModal}>
           <div className="modal" style={{ width: 480 }} onClick={e => e.stopPropagation()}>
-            <h3>添加批注</h3>
+            <h3>{annotateHadNote ? '编辑批注' : '添加批注'}</h3>
             <p className="lead">批注将写入变更留痕，团队成员均可追溯查看。</p>
             <div className="annotate-clause" style={{ fontFamily: "'Noto Serif SC', serif", fontSize: 14, color: 'var(--navy)', background: 'var(--paper-dim)', border: '1px solid var(--line)', borderLeft: '3px solid var(--gold)', padding: '10px 14px', marginBottom: 16, borderRadius: '0 3px 3px 0', lineHeight: 1.5 }}>
               <div>{annotateTarget}　{clauses.find(c => c.code === annotateTarget)?.title}</div>
@@ -851,9 +878,14 @@ export default function WorkbenchPage() {
                 onChange={e => setAnnotateText(e.target.value)}
                 placeholder="例：账期偏长，建议与对方协商缩短；或说明不接受该修改的理由…" />
             </div>
-            <div className="modal-foot right" style={{ marginTop: 20 }}>
-              <button type="button" className="ca-btn" onClick={() => setAnnotateTarget(null)}>取消</button>
-              <button type="button" className="confirm-btn" onClick={doAnnotate}>保存批注</button>
+            <div className="modal-foot" style={{ marginTop: 20 }}>
+              {annotateHadNote ? (
+                <button type="button" className="ca-btn danger" onClick={doDeleteAnnotate}>删除批注</button>
+              ) : <span />}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" className="ca-btn" onClick={closeAnnotateModal}>取消</button>
+                <button type="button" className="confirm-btn" onClick={doAnnotate}>保存批注</button>
+              </div>
             </div>
           </div>
         </div>

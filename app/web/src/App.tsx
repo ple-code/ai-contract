@@ -3,10 +3,11 @@ import { useAuth } from './contexts/AuthContext';
 import { useToasts } from './hooks/useToast';
 import Topbar from './components/Topbar';
 import SideMenu from './components/SideMenu';
+import PostSelector from './components/PostSelector';
 import Toast from './components/Toast';
 
 export default function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, needPostSelect, setNeedPostSelect } = useAuth();
   const location = useLocation();
   const toasts = useToasts();
 
@@ -29,6 +30,9 @@ export default function App() {
             <Outlet />
           </div>
         </div>
+      )}
+      {needPostSelect && (
+        <PostSelector onClose={() => setNeedPostSelect(false)} />
       )}
       <Toast toasts={toasts} />
     </>

@@ -33,6 +33,7 @@ export default function ContractListPage() {
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [chlog, setChlog] = useState<ContractBrief | null>(null);
   const statusRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     setLoading(true);
@@ -53,7 +54,9 @@ export default function ContractListPage() {
   useEffect(() => {
     const close = (e: MouseEvent) => {
       if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
-      if (openMenu !== null) setOpenMenu(null);
+      if (openMenu !== null && menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
     };
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
@@ -61,21 +64,18 @@ export default function ContractListPage() {
 
   const statusLabel = status || '全部状态';
 
-  const doExport = (c: ContractBrief, fmt: 'docx' | 'pdf' | 'report') => {
+  const doExport = (c: ContractBrief, fmt: 'docx' | 'pdf') => {
     setOpenMenu(null);
     if (!c.current_version_id) {
       addToast('当前合同没有可导出的版本', 'error');
       return;
     }
     const vid = c.current_version_id;
-    const label = fmt === 'docx' ? 'Word' : fmt === 'pdf' ? 'PDF' : '审查报告';
-    if (fmt === 'report') {
-      window.open(`/api/versions/${vid}/export/report`, '_blank');
-    } else if (fmt === 'pdf') {
-      window.open(`/api/versions/${vid}/export/revised?format=pdf`, '_blank');
-    } else {
-      window.open(`/api/versions/${vid}/export/revised`, '_blank');
-    }
+    const label = fmt === 'docx' ? 'Word' : 'PDF';
+    const url = fmt === 'pdf'
+      ? `/api/versions/${vid}/export/revised?format=pdf`
+      : `/api/versions/${vid}/export/revised`;
+    window.open(url, '_blank');
     addToast(`正在导出「${c.name}」v${c.current_version_no} · ${label}`, 'success');
   };
 
@@ -156,18 +156,17 @@ export default function ContractListPage() {
               <td className="no">{fmtTime(c.updated_at)}</td>
               <td>{c.uploader_name}</td>
               <td className="col-actions" onClick={e => e.stopPropagation()}>
-                <div className="row-menu">
+                <div className="row-menu" ref={openMenu === c.id ? menuRef : undefined}>
                   <button type="button" className="row-menu-btn" onClick={e => { e.stopPropagation(); setOpenMenu(openMenu === c.id ? null : c.id); }}>操作 ▾</button>
                   {openMenu === c.id && (
                     <div className="export-menu" style={{ display: 'block' }} onClick={e => e.stopPropagation()}>
                       <div className="export-mi" onClick={() => { setChlog(c); setOpenMenu(null); }}>变更记录</div>
-                      <div className="export-mi" onClick={() => doDownload(c)}>下载原文件</div>
                       <div className="export-mi has-sub">
                         <span>导出</span><span className="sub-arr">›</span>
                         <div className="export-sub">
+                          <div className="export-mi" onClick={() => doDownload(c)}>下载原文件</div>
                           <div className="export-mi" onClick={() => doExport(c, 'docx')}>Word <small>(.docx)</small></div>
                           <div className="export-mi" onClick={() => doExport(c, 'pdf')}>PDF <small>(.pdf)</small></div>
-                          <div className="export-mi" onClick={() => doExport(c, 'report')}>审查报告 <small>(.docx)</small></div>
                         </div>
                       </div>
                     </div>

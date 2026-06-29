@@ -22,7 +22,6 @@ const ACTION_OPTS: { value: string; label: string }[] = [
   { value: 'annotate', label: '添加批注' },
   { value: 'finalize', label: '完成复核' },
   { value: 'export_revised', label: '导出修订稿' },
-  { value: 'export_report', label: '导出审查报告' },
   { value: 'user_change', label: '切换岗位' },
 ];
 
@@ -61,7 +60,7 @@ export default function AuditLogPage() {
               <td>{a.username || a.user_post || '-'}</td>
               <td>{a.user_post || '-'}</td>
               <td><span className="type-badge">{ACTION_LABEL[a.action] || a.action}</span></td>
-              <td>{a.target_label || a.target_type || '-'}</td>
+              <td>{a.target_label || '-'}</td>
               <td style={{ fontVariantNumeric: 'tabular-nums' }}>{a.ip || '-'}</td>
             </tr>
           ))}

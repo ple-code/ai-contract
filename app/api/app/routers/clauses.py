@@ -6,7 +6,7 @@ from ..models.changelog import ChangeLog
 from ..models.clause import Clause, ClauseReviewState
 from ..models.contract import Contract, ContractVersion
 from ..schemas.clause import AnnotateUpdate, ClauseReviewStateInfo, DecisionUpdate, VersionReviewState
-from ..services.audit_service import log_audit
+from ..services.audit_service import clause_target_label, log_audit
 
 router = APIRouter(prefix="/api/versions", tags=["clauses"])
 
@@ -46,6 +46,7 @@ async def set_decision(vid: int, code: str, body: DecisionUpdate, request: Reque
     ))
     await log_audit(db, user_id=user.id, user_post=user.post, action=event,
                     target_type="clause", target_id=f"{vid}/{code}",
+                    target_label=await clause_target_label(db, vid, code),
                     ip=request.client.host if request.client else None)
     await db.commit()
     return {"ok": True}
@@ -67,6 +68,7 @@ async def annotate(vid: int, code: str, body: AnnotateUpdate, request: Request, 
     ))
     await log_audit(db, user_id=user.id, user_post=user.post, action="annotate",
                     target_type="clause", target_id=f"{vid}/{code}",
+                    target_label=await clause_target_label(db, vid, code),
                     ip=request.client.host if request.client else None)
     await db.commit()
     return {"ok": True}
@@ -102,6 +104,7 @@ async def apply_suggestion(vid: int, code: str, request: Request, db: DB, user: 
     ))
     await log_audit(db, user_id=user.id, user_post=user.post, action="apply",
                     target_type="clause", target_id=f"{vid}/{code}",
+                    target_label=await clause_target_label(db, vid, code),
                     ip=request.client.host if request.client else None)
     await db.commit()
     return {"ok": True}
@@ -129,6 +132,10 @@ async def revert_apply(vid: int, code: str, request: Request, db: DB, user: Curr
         event_type="revert_apply", clause_code=code, detail="撤销应用",
         actor_user_id=user.id, actor_post=user.post,
     ))
+    await log_audit(db, user_id=user.id, user_post=user.post, action="revert_apply",
+                    target_type="clause", target_id=f"{vid}/{code}",
+                    target_label=await clause_target_label(db, vid, code),
+                    ip=request.client.host if request.client else None)
     await db.commit()
     return {"ok": True}
 

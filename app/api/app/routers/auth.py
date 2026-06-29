@@ -24,7 +24,9 @@ async def login(body: LoginRequest, request: Request, response: Response, db: DB
     response.set_cookie("access_token", token, httponly=True, samesite="lax", max_age=7 * 24 * 3600)
 
     await log_audit(db, user_id=user.id, user_post=user.post, action="login",
-                    target_type="user", target_id=user.id, ip=request.client.host if request.client else None)
+                    target_type="user", target_id=user.id,
+                    target_label=user.display_name or user.username,
+                    ip=request.client.host if request.client else None)
     await db.commit()
 
     return LoginResponse(
@@ -37,6 +39,8 @@ async def login(body: LoginRequest, request: Request, response: Response, db: DB
 async def logout(response: Response, request: Request, user: CurrentUser, db: DB):
     response.delete_cookie("access_token")
     await log_audit(db, user_id=user.id, user_post=user.post, action="logout",
+                    target_type="user", target_id=user.id,
+                    target_label=user.display_name or user.username,
                     ip=request.client.host if request.client else None)
     await db.commit()
     return {"ok": True}

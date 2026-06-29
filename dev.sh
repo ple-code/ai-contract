@@ -31,6 +31,9 @@ echo "前端: http://localhost:5173"
 echo "API:  http://localhost:8000"
 echo "默认管理员: admin / Admin@123"
 echo ""
+echo "提示：导出 PDF 需本机安装 LibreOffice（brew install --cask libreoffice）"
+echo "      或使用 docker compose up api 启动带 LibreOffice 的后端"
+echo ""
 echo "Ctrl+C 停止所有服务"
 
 trap "kill $API_PID $WEB_PID 2>/dev/null; exit" INT TERM

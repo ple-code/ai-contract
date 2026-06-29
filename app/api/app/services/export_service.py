@@ -5,7 +5,9 @@
 - convert_to_pdf：调用 LibreOffice headless 把 docx 转 pdf
 """
 import io
+import os
 import re
+import shutil
 import subprocess
 import tempfile
 from copy import deepcopy
@@ -20,15 +22,32 @@ from docx.shared import Pt, RGBColor
 from docxtpl import DocxTemplate
 from sqlalchemy import select
 
+from ..config import resolve_upload_path
 from ..models.clause import Clause, ClauseReviewState
 from ..models.contract import Contract, ContractType, ContractVersion
 from ..models.review import Finding, Review
 
 TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "templates" / "采购合同模板.docx"
 
-RISK_LABEL = {"high": "高风险", "medium": "中风险", "low": "低风险"}
+RISK_LABEL = {"high": "高风险", "medium": "中风险", "mid": "中风险", "low": "低风险"}
 DECISION_LABEL = {"accept": "接受", "reject": "拒绝"}
 STANCE_LABEL = {"buyer": "甲方（采购方）", "seller": "乙方（供应方）", "neutral": "中立"}
+
+def _format_legal_basis(legal_basis) -> str:
+    """兼容 AI 入库字段 article / article_no 不统一。"""
+    if not legal_basis:
+        return ""
+    parts = []
+    for lb in legal_basis:
+        if not isinstance(lb, dict):
+            continue
+        law = lb.get("law") or ""
+        article = lb.get("article_no") or lb.get("article") or lb.get("articles") or ""
+        label = f"{law} {article}".strip()
+        if label:
+            parts.append(label)
+    return "、".join(parts)
+
 
 _PARTY_RE = re.compile(r"(甲方|需方|买方|采购方)[：:]\s*([^\s，,。；;]+)")
 _PARTY_B_RE = re.compile(r"(乙方|供方|卖方|供应方|供货方)[：:]\s*([^\s，,。；;]+)")
@@ -124,8 +143,12 @@ async def build_revised_contract(db, version_id: int) -> io.BytesIO:
     states_map = {s.clause_code: s for s in states_list}
 
     # 打开原文件并解析；blocks 指向此 doc 的 body 子元素，用于原地替换
-    doc = Document(ver.file_uri)
-    parsed = parse_docx(ver.file_uri, _doc=doc)
+    doc_path = resolve_upload_path(ver.file_uri)
+    if not doc_path.is_file():
+        raise HTTPException(500, f"版本源文件不存在：{ver.file_uri}")
+
+    doc = Document(str(doc_path))
+    parsed = parse_docx(str(doc_path), _doc=doc)
 
     replaced = 0
     skipped_table = 0
@@ -205,7 +228,7 @@ async def build_review_report(db, version_id: int) -> io.BytesIO:
 
     doc.add_heading("审查结果汇总", level=1)
     high = sum(1 for f in findings_list if f.risk_level == "high")
-    mid = sum(1 for f in findings_list if f.risk_level == "medium")
+    mid = sum(1 for f in findings_list if f.risk_level in ("medium", "mid"))
     low = sum(1 for f in findings_list if f.risk_level == "low")
     applied = sum(1 for s in states_list if s.applied)
 
@@ -223,7 +246,7 @@ async def build_review_report(db, version_id: int) -> io.BytesIO:
         doc.add_heading(f"{clause.code} {clause.title}", level=2)
         p_text = doc.add_paragraph()
         p_text.add_run("条款内容：").bold = True
-        p_text.add_run(clause.text[:2000])
+        p_text.add_run((clause.text or "")[:2000])
         if st and st.applied:
             p_app = doc.add_paragraph()
             p_app.add_run("已应用建议：").bold = True
@@ -242,7 +265,7 @@ async def build_review_report(db, version_id: int) -> io.BytesIO:
                 p_sug.add_run("修改建议：").bold = True
                 p_sug.add_run(f.suggestion)
             if f.legal_basis:
-                refs = "、".join(f"{lb['law']} {lb['article_no']}" for lb in f.legal_basis if isinstance(lb, dict))
+                refs = _format_legal_basis(f.legal_basis)
                 if refs:
                     p_law = doc.add_paragraph()
                     p_law.add_run("法律依据：").bold = True
@@ -265,20 +288,48 @@ async def build_review_report(db, version_id: int) -> io.BytesIO:
 
 # ---------------- docx → pdf（LibreOffice headless） ----------------
 
+def _libreoffice_cmd() -> list[str]:
+    """查找 libreoffice / soffice 可执行文件（Linux Docker、macOS 本地开发）。"""
+    candidates = [
+        "libreoffice",
+        "soffice",
+        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+        "/usr/bin/libreoffice",
+        "/usr/bin/soffice",
+    ]
+    for cmd in candidates:
+        if cmd.startswith("/"):
+            if Path(cmd).is_file():
+                return [cmd]
+        elif shutil.which(cmd):
+            return [cmd]
+    return []
+
+
 def convert_to_pdf(docx_buf: io.BytesIO, out_dir: Path | None = None) -> io.BytesIO:
     """把 docx 字节流转成 pdf 字节流。依赖系统 libreoffice / soffice。"""
+    lo_cmd = _libreoffice_cmd()
+    if not lo_cmd:
+        raise RuntimeError(
+            "PDF 转换失败：服务器未安装 LibreOffice。"
+            " macOS 本地开发可执行：brew install --cask libreoffice"
+        )
     with tempfile.TemporaryDirectory() as td:
         td_path = Path(td)
         src = td_path / "source.docx"
         with open(src, "wb") as f:
             f.write(docx_buf.getvalue())
         try:
+            env = {**os.environ, "HOME": "/tmp"}
             subprocess.run(
-                ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", str(td_path), str(src)],
-                check=True, capture_output=True, timeout=120,
+                [*lo_cmd, "--headless", "--convert-to", "pdf", "--outdir", str(td_path), str(src)],
+                check=True, capture_output=True, timeout=120, env=env,
             )
-        except (FileNotFoundError, subprocess.CalledProcessError) as e:
-            raise RuntimeError("PDF 转换失败：服务器未安装 LibreOffice，或转换出错") from e
+        except subprocess.CalledProcessError as e:
+            err = (e.stderr or b"").decode(errors="replace")[-500:]
+            raise RuntimeError(f"PDF 转换失败：LibreOffice 转换出错（{err.strip() or '未知错误'}）") from e
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError("PDF 转换失败：LibreOffice 转换超时") from e
         pdf_path = td_path / "source.pdf"
         if not pdf_path.exists():
             raise RuntimeError("PDF 转换失败：未生成输出文件")

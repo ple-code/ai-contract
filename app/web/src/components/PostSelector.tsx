@@ -12,7 +12,6 @@ const POSTS = [
 export default function PostSelector({ onClose }: { onClose?: () => void }) {
   const { user, setPost } = useAuth();
   const [sel, setSel] = useState(user?.post || '');
-  const [remember, setRemember] = useState(false);
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,7 +20,7 @@ export default function PostSelector({ onClose }: { onClose?: () => void }) {
     if (!sel) return;
     setSaving(true);
     try {
-      await setPost(sel, remember);
+      await setPost(sel, false);
       if (onClose) onClose();
       if (location.pathname === '/login') navigate('/');
     } finally {
@@ -29,10 +28,12 @@ export default function PostSelector({ onClose }: { onClose?: () => void }) {
     }
   };
 
+  const changing = !!user?.post;
+
   return (
-    <div className="modal-mask">
-      <div className="modal">
-        <h3>请选择你的岗位</h3>
+    <div className="modal-mask" onClick={() => changing && onClose?.()}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h3>{changing ? '更换岗位' : '请选择你的岗位'}</h3>
         <p className="lead">系统会按你的岗位，进入合同后自动定位到你关注的条款段落，不必逐页翻看整篇。</p>
         <div className="role-grid">
           {POSTS.map(p => (
@@ -43,13 +44,14 @@ export default function PostSelector({ onClose }: { onClose?: () => void }) {
           ))}
         </div>
         <div className="modal-foot">
-          <label className="remember">
-            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-            记住，下次不再选择
-          </label>
-          <button className="confirm-btn" disabled={!sel || saving} onClick={confirm}>
-            {saving ? '设置中...' : '进入系统'}
-          </button>
+          <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
+            {changing && onClose && (
+              <button type="button" className="ca-btn" onClick={onClose}>取消</button>
+            )}
+            <button className="confirm-btn" disabled={!sel || saving} onClick={confirm}>
+              {saving ? '设置中...' : (changing ? '确认更换' : '进入系统')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import settings
+from ..config import settings, resolve_upload_path
 from ..deps import DB, CurrentUser
 from ..models.changelog import ChangeLog
 from ..models.clause import Clause
@@ -169,6 +169,7 @@ async def create_contract(
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
+    file_ref = save_path.name
     clauses = parser.parse(str(save_path))
     full_text = "\n".join(c.title + " " + c.text for c in clauses)
     type_code, confidence = detect_contract_type(full_text)
@@ -278,7 +279,7 @@ async def create_contract(
     version = ContractVersion(
         contract_id=contract.id, version_no=ver_no,
         source="上传", status="AI初审中",
-        file_uri=str(save_path), file_name=file.filename or "",
+        file_uri=file_ref, file_name=file.filename or "",
         contract_no=contract_no,
         summary=summary,
         created_by=user.id,
@@ -402,8 +403,8 @@ async def download_original(contract_id: int, db: DB, user: CurrentUser):
            if contract.current_version_id else None)
     if not ver or not ver.file_uri:
         raise HTTPException(404, "该合同没有可下载的原文件")
-    path = Path(ver.file_uri)
-    if not path.exists():
+    path = resolve_upload_path(ver.file_uri)
+    if not path.is_file():
         raise HTTPException(404, "原文件已从存储中丢失")
     return FileResponse(path, filename=ver.file_name or path.name)
 
@@ -418,10 +419,12 @@ async def download_version_source(contract_id: int, version_no: int, db: DB, use
     ver = (await db.execute(stmt)).scalar_one_or_none()
     if not ver or not ver.file_uri:
         raise HTTPException(404, "该版本没有可下载的原文件")
-    path = Path(ver.file_uri)
-    if not path.exists():
+    path = resolve_upload_path(ver.file_uri)
+    if not path.is_file():
         raise HTTPException(404, "原文件已从存储中丢失")
     return FileResponse(path, filename=ver.file_name or path.name)
+
+
 async def compare_contract(contract_id: int, db: DB, user: CurrentUser):
     contract = await db.get(Contract, contract_id)
     if not contract or not contract.current_version_id:

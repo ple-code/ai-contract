@@ -15,7 +15,7 @@ from ..schemas.admin import (
     UserUpdate,
 )
 from ..security import hash_password
-from ..services.audit_service import log_audit
+from ..services.audit_service import batch_resolve_audit_target_labels, log_audit
 from ..services.model_gateway import decrypt_token, encrypt_token
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -161,11 +161,15 @@ async def list_audit_logs(
         for u in (await db.execute(users_stmt)).scalars().all():
             users_map[u.id] = u.display_name or u.username
 
-    items = [AuditLogInfo(
-        id=l.id, user_id=l.user_id, user_post=l.user_post,
-        username=users_map.get(l.user_id, "") if l.user_id else None,
-        action=l.action, target_type=l.target_type,
-        target_id=l.target_id, target_label=l.target_label,
-        ip=l.ip, detail=l.detail, created_at=l.created_at,
-    ) for l in logs]
+    labels_map = await batch_resolve_audit_target_labels(db, logs)
+
+    items = []
+    for l in logs:
+        items.append(AuditLogInfo(
+            id=l.id, user_id=l.user_id, user_post=l.user_post,
+            username=users_map.get(l.user_id, "") if l.user_id else None,
+            action=l.action, target_type=l.target_type,
+            target_id=l.target_id, target_label=labels_map.get(l.id, "-"),
+            ip=l.ip, detail=l.detail, created_at=l.created_at,
+        ))
     return AuditLogListResponse(items=items, total=total, page=page, page_size=page_size)

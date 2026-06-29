@@ -24,3 +24,19 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def resolve_upload_path(file_uri: str) -> Path:
+    """将 DB 中的 file_uri 解析为可读路径（兼容 dev 相对路径与 Docker /data/uploads）。"""
+    raw = Path(file_uri)
+    if raw.is_absolute() and raw.is_file():
+        return raw
+    upload = settings.upload_path
+    for cand in (upload / raw.name, upload / raw, upload / raw.parts[-1] if raw.parts else raw):
+        if cand.is_file():
+            return cand.resolve()
+    for base in (Path.cwd(), Path("/app")):
+        legacy = (base / raw).resolve()
+        if legacy.is_file():
+            return legacy
+    return (upload / raw.name).resolve()

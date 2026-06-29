@@ -8,7 +8,7 @@ from ..deps import DB, CurrentUser
 from ..models.clause import Clause
 from ..models.contract import Contract, ContractVersion
 from ..schemas.clause import ClauseInfo
-from ..services.audit_service import log_audit
+from ..services.audit_service import log_audit, version_target_label
 from ..services.export_service import build_review_report, build_revised_contract, convert_to_pdf
 
 router = APIRouter(prefix="/api/versions", tags=["versions"])
@@ -38,6 +38,7 @@ async def complete_review(vid: int, request: Request, db: DB, user: CurrentUser)
 
     await log_audit(db, user_id=user.id, user_post=user.post, action="finalize",
                     target_type="version", target_id=vid,
+                    target_label=await version_target_label(db, vid),
                     ip=request.client.host if request.client else None)
     await db.commit()
     return {"ok": True}
@@ -53,6 +54,7 @@ async def export_report(vid: int, request: Request, db: DB, user: CurrentUser,
     buf = await build_review_report(db, vid)
     await log_audit(db, user_id=user.id, user_post=user.post, action="export_report",
                     target_type="version", target_id=vid,
+                    target_label=await version_target_label(db, vid),
                     ip=request.client.host if request.client else None)
     await db.commit()
     if format.lower() == "pdf":
@@ -81,6 +83,7 @@ async def export_revised(vid: int, request: Request, db: DB, user: CurrentUser,
     buf = await build_revised_contract(db, vid)
     await log_audit(db, user_id=user.id, user_post=user.post, action="export_revised",
                     target_type="version", target_id=vid,
+                    target_label=await version_target_label(db, vid),
                     ip=request.client.host if request.client else None)
     await db.commit()
     if format.lower() == "pdf":
