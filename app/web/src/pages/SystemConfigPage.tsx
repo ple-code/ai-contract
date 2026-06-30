@@ -54,7 +54,8 @@ export default function SystemConfigPage() {
     setTesting(true);
     try {
       const res = await testModelConfig();
-      addToast(res.ok ? '连通测试成功' : `测试失败: ${res.message}`, res.ok ? 'success' : 'error');
+      const msg = res.message || res.error || '未知错误';
+      addToast(res.ok ? '连通测试成功' : `测试失败: ${msg}`, res.ok ? 'success' : 'error');
     } catch (err: unknown) {
       addToast(err instanceof Error ? err.message : '测试失败', 'error');
     } finally {

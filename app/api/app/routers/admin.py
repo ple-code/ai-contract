@@ -72,9 +72,10 @@ async def test_model_config(db: DB, user: AdminUser):
             scene="config_test", user_id=user.id,
         )
         content = resp["choices"][0]["message"]["content"]
-        return {"ok": True, "response": content}
+        return {"ok": True, "response": content, "message": "连通成功"}
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        msg = str(e).strip() or type(e).__name__
+        return {"ok": False, "error": msg, "message": msg}
 
 
 @router.get("/users", response_model=list[UserBrief])

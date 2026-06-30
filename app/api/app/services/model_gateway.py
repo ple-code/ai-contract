@@ -29,24 +29,47 @@ def encrypt_token(token: str) -> str:
 
 
 def decrypt_token(enc: str) -> str:
+    if not enc:
+        raise ValueError("empty token")
     return _get_fernet().decrypt(enc.encode()).decode()
 
 
-async def _resolve_config(db: AsyncSession) -> tuple[str, str, str, str]:
-    """返回 (base_url, token, model, protocol)。
+def _infer_protocol(base_url: str, default: str) -> str:
+    """智谱 CodePlan 等 Anthropic 兼容端点 URL 含 /anthropic。"""
+    if "/anthropic" in base_url.lower():
+        return "anthropic"
+    return default if default in ("openai", "anthropic") else "openai"
 
-    protocol 取自 settings.AI_PROTOCOL，值为 "openai" 或 "anthropic"。
-    CodePlan（智谱代码套餐）key 必须走 anthropic 兼容端点 /api/anthropic。
-    """
+
+async def _resolve_config(db: AsyncSession) -> tuple[str, str, str, str]:
+    """返回 (base_url, token, model, protocol)。"""
     stmt = select(AppModelConfig).limit(1)
     cfg = (await db.execute(stmt)).scalar_one_or_none()
-    if cfg and cfg.gateway_base_url and cfg.gateway_token_enc:
-        base_url = cfg.gateway_base_url.rstrip("/")
-        token = decrypt_token(cfg.gateway_token_enc)
-        model = cfg.default_model or settings.AI_MODEL
-        return base_url, token, model, settings.AI_PROTOCOL
-    return (settings.AI_BASE_URL.rstrip("/"), settings.AI_API_KEY,
-            settings.AI_MODEL, settings.AI_PROTOCOL)
+
+    base_url = settings.AI_BASE_URL.rstrip("/")
+    token = settings.AI_API_KEY
+    model = settings.AI_MODEL
+    protocol = settings.AI_PROTOCOL
+
+    if cfg:
+        if cfg.gateway_base_url:
+            base_url = cfg.gateway_base_url.rstrip("/")
+        if cfg.default_model:
+            model = cfg.default_model
+        if cfg.gateway_token_enc:
+            try:
+                token = decrypt_token(cfg.gateway_token_enc)
+            except Exception as exc:
+                if not settings.AI_API_KEY:
+                    raise RuntimeError(
+                        "API Token 无法解密（服务器密钥已变更），请在系统配置中重新填写 Token 并保存"
+                    ) from exc
+                # DB token 与当前 SECRET_KEY 不匹配时，回退 .env 中的 key（便于迁移后仍可用）
+
+    protocol = _infer_protocol(base_url, protocol)
+    if not token:
+        raise RuntimeError("未配置 API Token，请在系统配置中填写并保存")
+    return base_url, token, model, protocol
 
 
 def _split_system(messages: list[dict]) -> tuple[str | None, list[dict]]:
