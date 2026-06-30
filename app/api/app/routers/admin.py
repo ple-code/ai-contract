@@ -9,6 +9,7 @@ from ..schemas.admin import (
     AuditLogInfo,
     AuditLogListResponse,
     ModelConfigInfo,
+    ModelConfigTest,
     ModelConfigUpdate,
     UserBrief,
     UserCreate,
@@ -63,13 +64,17 @@ async def update_model_config(body: ModelConfigUpdate, request: Request, db: DB,
 
 
 @router.post("/model-config/test")
-async def test_model_config(db: DB, user: AdminUser):
+async def test_model_config(db: DB, user: AdminUser, body: ModelConfigTest | None = None):
     from ..services.model_gateway import chat_completion
+    ov = body or ModelConfigTest()
     try:
         resp = await chat_completion(
             db,
             [{"role": "user", "content": "回复OK"}],
             scene="config_test", user_id=user.id,
+            config_override_base_url=ov.gateway_base_url,
+            config_override_token=ov.gateway_token,
+            config_override_model=ov.default_model,
         )
         content = resp["choices"][0]["message"]["content"]
         return {"ok": True, "response": content, "message": "连通成功"}

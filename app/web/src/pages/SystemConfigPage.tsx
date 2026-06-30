@@ -53,9 +53,13 @@ export default function SystemConfigPage() {
   const test = async () => {
     setTesting(true);
     try {
-      const res = await testModelConfig();
+      const payload: Record<string, string> = {};
+      if (form.gateway_base_url.trim()) payload.gateway_base_url = form.gateway_base_url.trim();
+      if (form.gateway_token.trim()) payload.gateway_token = form.gateway_token.trim();
+      if (form.default_model.trim()) payload.default_model = form.default_model.trim();
+      const res = await testModelConfig(payload);
       const msg = res.message || res.error || '未知错误';
-      addToast(res.ok ? '连通测试成功' : `测试失败: ${msg}`, res.ok ? 'success' : 'error');
+      addToast(res.ok ? `连通测试成功${res.response ? `：${res.response.slice(0, 40)}` : ''}` : `测试失败: ${msg}`, res.ok ? 'success' : 'error');
     } catch (err: unknown) {
       addToast(err instanceof Error ? err.message : '测试失败', 'error');
     } finally {

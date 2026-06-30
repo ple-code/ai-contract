@@ -19,6 +19,13 @@ class ModelConfigUpdate(BaseModel):
     post_focus: dict | None = None
 
 
+class ModelConfigTest(BaseModel):
+    """连通测试可选传入当前表单值（无需先保存）。"""
+    gateway_base_url: str | None = None
+    gateway_token: str | None = None
+    default_model: str | None = None
+
+
 class UserCreate(BaseModel):
     username: str
     password: str

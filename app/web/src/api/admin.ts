@@ -17,7 +17,11 @@ export interface AuditListRes { items: AuditLogInfo[]; total: number }
 export const getModelConfig = () => request<ModelConfigInfo>('/api/admin/model-config');
 export const updateModelConfig = (data: Record<string, unknown>) =>
   request<ModelConfigInfo>('/api/admin/model-config', { method: 'PUT', body: JSON.stringify(data) });
-export const testModelConfig = () => request<{ ok: boolean; message?: string; error?: string; response?: string }>('/api/admin/model-config/test', { method: 'POST' });
+export const testModelConfig = (data?: Record<string, string>) =>
+  request<{ ok: boolean; message?: string; error?: string; response?: string }>(
+    '/api/admin/model-config/test',
+    { method: 'POST', body: JSON.stringify(data || {}) },
+  );
 
 export const getUsers = () => request<UserBrief[]>('/api/admin/users');
 export const createUser = (data: Record<string, string>) =>

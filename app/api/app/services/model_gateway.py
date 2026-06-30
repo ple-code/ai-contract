@@ -41,7 +41,13 @@ def _infer_protocol(base_url: str, default: str) -> str:
     return default if default in ("openai", "anthropic") else "openai"
 
 
-async def _resolve_config(db: AsyncSession) -> tuple[str, str, str, str]:
+async def _resolve_config(
+    db: AsyncSession,
+    *,
+    override_base_url: str | None = None,
+    override_token: str | None = None,
+    override_model: str | None = None,
+) -> tuple[str, str, str, str]:
     """返回 (base_url, token, model, protocol)。"""
     stmt = select(AppModelConfig).limit(1)
     cfg = (await db.execute(stmt)).scalar_one_or_none()
@@ -64,11 +70,18 @@ async def _resolve_config(db: AsyncSession) -> tuple[str, str, str, str]:
                     raise RuntimeError(
                         "API Token 无法解密（服务器密钥已变更），请在系统配置中重新填写 Token 并保存"
                     ) from exc
-                # DB token 与当前 SECRET_KEY 不匹配时，回退 .env 中的 key（便于迁移后仍可用）
+                # DB token 与当前 SECRET_KEY 不匹配时，回退 .env 中的 key
+
+    if override_base_url:
+        base_url = override_base_url.rstrip("/")
+    if override_model:
+        model = override_model
+    if override_token:
+        token = override_token.strip()
 
     protocol = _infer_protocol(base_url, protocol)
     if not token:
-        raise RuntimeError("未配置 API Token，请在系统配置中填写并保存")
+        raise RuntimeError("未配置 API Token，请填写后保存或连通测试")
     return base_url, token, model, protocol
 
 
@@ -105,8 +118,16 @@ async def chat_completion(
     scene: str = "review",
     user_id: int | None = None,
     model_override: str | None = None,
+    config_override_base_url: str | None = None,
+    config_override_token: str | None = None,
+    config_override_model: str | None = None,
 ) -> dict:
-    base_url, token, model, protocol = await _resolve_config(db)
+    base_url, token, model, protocol = await _resolve_config(
+        db,
+        override_base_url=config_override_base_url,
+        override_token=config_override_token,
+        override_model=config_override_model,
+    )
     if model_override:
         model = model_override
     t0 = time.time()
